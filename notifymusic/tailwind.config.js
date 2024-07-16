@@ -1,18 +1,13 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        primary: {
-          light: "#1E90FF", // Dodger Blue
-          dark: "#1A78D1", // Darker shade for hover states
-        },
+        primary: "#1E90FF", // DodgerBlue
       },
     },
   },
+  darkMode: "class",
   plugins: [],
 };
