@@ -20,7 +20,7 @@ async function fetchSpotifyApi(
   return await res.json();
 }
 
-async function searchTracks(query: string) {
+export async function searchTracks(query: string) {
   const data = await fetchSpotifyApi(
     `/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
   );
@@ -33,5 +33,3 @@ export async function getTopTracks() {
   );
   return data.items || [];
 }
-
-export default searchTracks;
