@@ -1,7 +1,9 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { Provider } from "react-redux";
+import { store } from "./store";
+import { Toaster } from "react-hot-toast";
 import Navigation from "./components/Navigation";
 import Home from "./components/Home";
 import Search from "./components/Search";
@@ -9,15 +11,11 @@ import Library from "./components/Library";
 import Player from "./components/Player";
 import DarkModeToggle from "./components/DarkModeToggle";
 
-const queryClient = new QueryClient();
-
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
-
   return (
-    <QueryClientProvider client={queryClient}>
+    <Provider store={store}>
       <Router>
-        <div className={`min-h-screen flex flex-col ${darkMode ? "dark" : ""}`}>
+        <div className="min-h-screen flex flex-col dark:bg-gray-900">
           <Navigation />
           <main className="flex-grow container mx-auto px-4 py-8">
             <Routes>
@@ -27,10 +25,11 @@ function App() {
             </Routes>
           </main>
           <Player />
-          <DarkModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+          <DarkModeToggle />
         </div>
       </Router>
-    </QueryClientProvider>
+      <Toaster position="top-right" />
+    </Provider>
   );
 }
 
