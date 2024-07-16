@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { searchTracks } from "../../lib/spotify";
+import searchTracks from "../../lib/spotify";
 import TrackCard from "../../components/TrackCard";
 
 interface Track {
