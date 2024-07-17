@@ -1,6 +1,6 @@
 // src/components/Search.jsx
 import React, { useState } from "react";
-import { SearchIcon } from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import TrackList from "./TrackList";
 
 const Search = () => {
@@ -32,7 +32,7 @@ const Search = () => {
             type="submit"
             className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary"
           >
-            <SearchIcon className="h-6 w-6" />
+            <MagnifyingGlassIcon className="h-6 w-6" />
           </button>
         </div>
       </form>
