@@ -1,6 +1,6 @@
 // src/components/Search.jsx
 import React, { useState } from "react";
-import { SearchIcon } from "@heroicons/react/24/outline";
+import { SearchIcon } from "@heroicons/react/24/solid";
 import TrackList from "./TrackList";
 
 const Search = () => {

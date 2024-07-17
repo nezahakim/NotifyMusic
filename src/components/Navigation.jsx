@@ -1,12 +1,8 @@
 // src/components/Navigation.jsx
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  HomeIcon,
-  SearchIcon,
-  CollectionIcon,
-} from "@heroicons/react/24/outline";
-
+import { HomeIcon, CollectionIcon } from "@heroicons/react/24/outline";
+import { SearchIcon } from "@heroicons/react/24/solid";
 const Navigation = () => {
   const location = useLocation();
 
