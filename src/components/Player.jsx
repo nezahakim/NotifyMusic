@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   PlayIcon,
   PauseIcon,
-  FastForwardIcon,
+  ChevronRightIcon,
   ChevronLeftIcon,
   VolumeUpIcon,
 } from "@heroicons/react/24/solid";
@@ -91,7 +91,7 @@ const Player = () => {
               )}
             </button>
             <button className="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary">
-              <FastForwardIcon className="h-6 w-6" />
+              <ChevronRightIcon className="h-6 w-6" />
             </button>
           </div>
           <div className="w-full flex items-center">
