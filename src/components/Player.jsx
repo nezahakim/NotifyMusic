@@ -6,7 +6,7 @@ import {
   PlayIcon,
   PauseIcon,
   FastForwardIcon,
-  RewindIcon,
+  ChevronLeftIcon,
   VolumeUpIcon,
 } from "@heroicons/react/24/solid";
 import {
@@ -78,7 +78,7 @@ const Player = () => {
         <div className="flex flex-col items-center w-1/2">
           <div className="flex items-center space-x-4 mb-2">
             <button className="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary">
-              <RewindIcon className="h-6 w-6" />
+              <ChevronLeftIcon className="h-6 w-6" />
             </button>
             <button
               onClick={() => dispatch(togglePlay())}
