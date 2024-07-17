@@ -8,6 +8,8 @@ const initialState = {
   progress: 0,
   duration: 0,
   queue: [],
+  shuffle: false,
+  repeat: "off", // 'off', 'all', 'one'
 };
 
 const playerSlice = createSlice({
@@ -35,6 +37,18 @@ const playerSlice = createSlice({
     removeFromQueue: (state, action) => {
       state.queue = state.queue.filter((track) => track.id !== action.payload);
     },
+    skipTrack: (state, action) => {
+      // Implement logic to skip to next or previous track
+      // This will depend on your queue implementation and shuffle/repeat modes
+    },
+    toggleShuffle: (state) => {
+      state.shuffle = !state.shuffle;
+    },
+    toggleRepeat: (state) => {
+      const modes = ["off", "all", "one"];
+      const currentIndex = modes.indexOf(state.repeat);
+      state.repeat = modes[(currentIndex + 1) % modes.length];
+    },
   },
 });
 
@@ -46,6 +60,9 @@ export const {
   setDuration,
   addToQueue,
   removeFromQueue,
+  skipTrack,
+  toggleShuffle,
+  toggleRepeat,
 } = playerSlice.actions;
 
 export default playerSlice.reducer;
