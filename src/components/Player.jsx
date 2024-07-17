@@ -7,7 +7,7 @@ import {
   PauseIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
-  VolumeUpIcon,
+  SpeakerphoneIcon,
 } from "@heroicons/react/24/solid";
 import {
   setProgress,
@@ -108,7 +108,7 @@ const Player = () => {
           </div>
         </div>
         <div className="flex items-center w-1/4 justify-end">
-          <VolumeUpIcon className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
+          <SpeakerphoneIcon className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
           <input
             type="range"
             min="0"
