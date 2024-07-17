@@ -1,10 +1,10 @@
 // src/components/Playlist.jsx
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { motion } from 'framer-motion';
-import { updatePlaylistOrder } from '../store/slices/playlistSlice';
-import TrackItem from './TrackItem';
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { motion } from "framer-motion";
+import { updatePlaylistOrder } from "../store/slices/playlistSlice";
+import TrackItem from "./TrackItem";
 
 const Playlist = () => {
   const dispatch = useDispatch();
@@ -33,14 +33,18 @@ const Playlist = () => {
             transition={{ duration: 0.5 }}
           >
             {playlists.map((playlist, index) => (
-              <Draggable key={playlist.id} draggableId={playlist.id} index={index}>
+              <Draggable
+                key={playlist.id}
+                draggableId={playlist.id}
+                index={index}
+              >
                 {(provided, snapshot) => (
                   <li
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     className={`bg-white dark:bg-gray-800 rounded-lg shadow-md ${
-                      snapshot.isDragging ? 'shadow-lg' : ''
+                      snapshot.isDragging ? "shadow-lg" : ""
                     }`}
                   >
                     <motion.div

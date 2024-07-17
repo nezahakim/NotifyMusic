@@ -10,11 +10,13 @@ import Search from "./components/Search";
 import Library from "./components/Library";
 import Player from "./components/Player";
 import DarkModeToggle from "./components/DarkModeToggle";
+import AnimatedBackground from "./components/AnimatedBackground";
 
 function App() {
   return (
     <Provider store={store}>
       <Router>
+        <AnimatedBackground />
         <div className="min-h-screen flex flex-col dark:bg-gray-900">
           <Navigation />
           <main className="flex-grow container mx-auto px-4 py-8">
