@@ -8,7 +8,7 @@ import {
   FastForwardIcon,
   RewindIcon,
   VolumeUpIcon,
-} from "@heroicons/react/solid";
+} from "@heroicons/react/24/solid";
 import {
   setProgress,
   setDuration,

@@ -1,6 +1,6 @@
 // src/components/DarkModeToggle.jsx
 import React from "react";
-import { SunIcon, MoonIcon } from "@heroicons/react/solid";
+import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
 
 const DarkModeToggle = ({ darkMode, setDarkMode }) => {
   return (

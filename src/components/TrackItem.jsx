@@ -1,6 +1,6 @@
 // src/components/TrackItem.jsx
 import React from "react";
-import { PlayIcon } from "@heroicons/react/solid";
+import { PlayIcon } from "@heroicons/react/24/solid";
 
 const TrackItem = ({ track }) => {
   return (
