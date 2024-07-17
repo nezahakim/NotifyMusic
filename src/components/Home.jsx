@@ -1,58 +1,50 @@
 // src/components/Home.jsx
-import React from "react";
+
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import TrackList from "./TrackList";
 
 const Home = () => {
+  const [activeCategory, setActiveCategory] = useState("Featured");
+  const categories = ["Featured", "Trending", "New Releases", "Your Favorites"];
+
   const featuredTracks = [
     {
       id: 1,
       title: "Song 1",
       artist: "Artist 1",
       cover: "https://via.placeholder.com/300",
+      views: "1.2M",
+      duration: "3:45",
     },
-    {
-      id: 2,
-      title: "Song 2",
-      artist: "Artist 2",
-      cover: "https://via.placeholder.com/300",
-    },
-    {
-      id: 3,
-      title: "Song 3",
-      artist: "Artist 3",
-      cover: "https://via.placeholder.com/300",
-    },
-    {
-      id: 4,
-      title: "Song 4",
-      artist: "Artist 4",
-      cover: "https://via.placeholder.com/300",
-    },
-    {
-      id: 5,
-      title: "Song 5",
-      artist: "Artist 5",
-      cover: "https://via.placeholder.com/300",
-    },
-    {
-      id: 6,
-      title: "Song 6",
-      artist: "Artist 6",
-      cover: "https://via.placeholder.com/300",
-    },
+    // ... (add more tracks with views and duration)
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-pink-100 dark:from-gray-900 dark:to-purple-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black px-4 py-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-300 dark:to-pink-300">
-          Featured Tracks
+        <h1 className="text-4xl font-extrabold mb-8 text-white">
+          Discover Music
         </h1>
+        <div className="flex space-x-4 mb-8 overflow-x-auto pb-2">
+          {categories.map((category) => (
+            <button
+              key={category}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                activeCategory === category
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
         <TrackList tracks={featuredTracks} />
       </motion.div>
     </div>

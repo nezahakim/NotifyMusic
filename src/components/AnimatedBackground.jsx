@@ -1,4 +1,5 @@
 // src/components/AnimatedBackground.jsx
+
 import React, { useEffect, useRef } from "react";
 
 const AnimatedBackground = () => {
@@ -7,58 +8,97 @@ const AnimatedBackground = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
 
-    const balls = [];
-    const colors = ["#8B5CF6", "#EC4899", "#EF4444", "#10B981"];
+    let animationFrameId;
+    let particles = [];
 
-    for (let i = 0; i < 20; i++) {
-      balls.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        radius: Math.random() * 20 + 10,
-        dx: (Math.random() - 0.5) * 2,
-        dy: (Math.random() - 0.5) * 2,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      });
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      balls.forEach((ball) => {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
-
-        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-          ball.dx = -ball.dx;
-        }
-        if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
-          ball.dy = -ball.dy;
-        }
-
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.globalAlpha = 0.2;
-        ctx.fill();
-        ctx.closePath();
-      });
-    }
-
-    animate();
-
-    const handleResize = () => {
+    const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      initParticles();
     };
 
-    window.addEventListener("resize", handleResize);
+    const initParticles = () => {
+      particles = [];
+      const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(createParticle());
+      }
+    };
+
+    const createParticle = () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 1,
+      color: getRandomColor(),
+      velocity: {
+        x: (Math.random() - 0.5) * 0.5,
+        y: (Math.random() - 0.5) * 0.5,
+      },
+      opacity: Math.random() * 0.5 + 0.1,
+    });
+
+    const getRandomColor = () => {
+      const colors = [
+        "rgba(139, 92, 246, 0.5)", // Purple
+        "rgba(236, 72, 153, 0.5)", // Pink
+        "rgba(239, 68, 68, 0.5)", // Red
+        "rgba(16, 185, 129, 0.5)", // Green
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
+    };
+
+    const drawParticle = (particle) => {
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      ctx.fillStyle = particle.color;
+      ctx.globalAlpha = particle.opacity;
+      ctx.fill();
+    };
+
+    const updateParticle = (particle) => {
+      particle.x += particle.velocity.x;
+      particle.y += particle.velocity.y;
+
+      if (particle.x < 0 || particle.x > canvas.width)
+        particle.velocity.x *= -1;
+      if (particle.y < 0 || particle.y > canvas.height)
+        particle.velocity.y *= -1;
+    };
+
+    const drawGradientOverlay = () => {
+      const gradient = ctx.createLinearGradient(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      gradient.addColorStop(0, "rgba(17, 24, 39, 0.7)");
+      gradient.addColorStop(1, "rgba(88, 28, 135, 0.7)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGradientOverlay();
+
+      particles.forEach((particle) => {
+        drawParticle(particle);
+        updateParticle(particle);
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    resizeCanvas();
+    animate();
+
+    window.addEventListener("resize", resizeCanvas);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
@@ -66,6 +106,7 @@ const AnimatedBackground = () => {
     <canvas
       ref={canvasRef}
       className="fixed top-0 left-0 w-full h-full -z-10"
+      style={{ pointerEvents: "none" }}
     />
   );
 };
