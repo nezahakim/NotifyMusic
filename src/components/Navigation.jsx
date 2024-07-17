@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   MagnifyingGlassIcon,
   HomeIcon,
-  CollectionsIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 
 const Navigation = () => {
@@ -13,7 +13,7 @@ const Navigation = () => {
   const navItems = [
     { name: "Home", path: "/", icon: HomeIcon },
     { name: "Search", path: "/search", icon: MagnifyingGlassIcon },
-    { name: "Library", path: "/library", icon: CollectionsIcon },
+    { name: "Library", path: "/library", icon: Bars3Icon },
   ];
 
   return (
