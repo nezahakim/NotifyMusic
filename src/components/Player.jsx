@@ -1,7 +1,7 @@
 // src/components/Player.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { useSwipeable } from "react-swipeable";
 import {
   PlayIcon,
@@ -10,9 +10,9 @@ import {
   ChevronLeftIcon,
   SpeakerWaveIcon,
   ArrowsRightLeftIcon,
-  ArrowPathRoundedSquareIcon,
+  ArrowPathIcon,
   QueueListIcon,
-  ChevronDownIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import {
   setProgress,
@@ -23,6 +23,8 @@ import {
   previousTrack,
   toggleShuffle,
   toggleRepeat,
+  addToQueue,
+  removeFromQueue,
 } from "../store/slices/playerSlice";
 
 const Player = () => {
@@ -34,20 +36,13 @@ const Player = () => {
     progress,
     duration,
     queue,
-    shuffleMode,
-    repeatMode,
+    shuffle,
+    repeat,
   } = useSelector((state) => state.player);
   const [expanded, setExpanded] = useState(false);
-  const [currentLyricIndex, setCurrentLyricIndex] = useState(0);
+  const [showPlaylist, setShowPlaylist] = useState(false);
   const audioRef = useRef(null);
-
-  // Mock lyrics (replace with actual lyrics fetching logic)
-  const lyrics = [
-    "This is the first line of the song",
-    "Here comes the second line",
-    "And now the third line of lyrics",
-    "The song goes on with the fourth line",
-  ];
+  const dragControls = useDragControls();
 
   useEffect(() => {
     if (isPlaying) {
@@ -56,18 +51,6 @@ const Player = () => {
       audioRef.current.pause();
     }
   }, [isPlaying, currentTrack]);
-
-  useEffect(() => {
-    const lyricsInterval = setInterval(() => {
-      if (isPlaying) {
-        setCurrentLyricIndex((prevIndex) =>
-          prevIndex < lyrics.length - 1 ? prevIndex + 1 : 0
-        );
-      }
-    }, 5000); // Change lyrics every 5 seconds (adjust as needed)
-
-    return () => clearInterval(lyricsInterval);
-  }, [isPlaying, lyrics.length]);
 
   const handleTimeUpdate = () => {
     dispatch(setProgress(audioRef.current.currentTime));
@@ -89,227 +72,217 @@ const Player = () => {
     audioRef.current.currentTime = time;
   };
 
-  const handlers = useSwipeable({
-    onSwipedUp: () => setExpanded(true),
-    onSwipedDown: () => setExpanded(false),
-    onSwipedLeft: () => dispatch(nextTrack()),
-    onSwipedRight: () => dispatch(previousTrack()),
-  });
-
-  const playerVariants = {
-    collapsed: { height: "6rem" },
-    expanded: { height: "100vh" },
+  const handleNext = () => {
+    dispatch(nextTrack());
   };
 
+  const handlePrevious = () => {
+    dispatch(previousTrack());
+  };
+
+  const handlers = useSwipeable({
+    onSwipedLeft: handleNext,
+    onSwipedRight: handlePrevious,
+    onSwipedDown: () => setExpanded(false),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true,
+  });
+
+  const playlist = [
+    { id: 1, title: "Song 1", artist: "Artist 1" },
+    { id: 2, title: "Song 2", artist: "Artist 2" },
+    { id: 3, title: "Song 3", artist: "Artist 3" },
+  ];
+
+  const mockLyrics =
+    "This is a sample lyric line\nIt goes on and on\nUntil the song is done";
+
   return (
-    <motion.div
-      {...handlers}
-      variants={playerVariants}
-      initial="collapsed"
-      animate={expanded ? "expanded" : "collapsed"}
-      transition={{ duration: 0.3 }}
-      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 dark:from-purple-900 dark:via-pink-900 dark:to-red-900 border-t border-gray-200 dark:border-gray-700 backdrop-blur-lg bg-opacity-80 dark:bg-opacity-80 overflow-hidden"
-    >
-      <div className="container mx-auto px-4 h-full flex flex-col">
-        <div className="flex items-center justify-between h-24">
-          <motion.img
-            src={currentTrack?.albumCover || "https://via.placeholder.com/50"}
-            alt="Album Cover"
-            className="w-16 h-16 rounded-full shadow-lg"
-            whileHover={{ scale: 1.1, rotate: 360 }}
-            transition={{ duration: 0.5 }}
-          />
-          <div className="flex-1 mx-4">
-            <h3 className="font-bold text-white text-shadow truncate">
-              {currentTrack?.title || "No track selected"}
-            </h3>
-            <p className="text-sm text-gray-200 truncate">{currentTrack?.artist}</p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => dispatch(togglePlay())}
-            className="bg-white text-purple-600 rounded-full p-3 hover:bg-yellow-300 hover:text-purple-700 transition-colors shadow-lg"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={isPlaying ? "pause" : "play"}
-                initial={{ opacity: 0, rotate: -180 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: 180 }}
-                transition={{ duration: 0.2 }}
-              >
-                {isPlaying ? (
-                  <PauseIcon className="h-8 w-8" />
-                ) : (
-                  <PlayIcon className="h-8 w-8" />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setExpanded(!expanded)}
-            className="ml-4 text-white"
-          >
-            <ChevronDownIcon className={`h-6 w-6 transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          </motion.button>
-        </div>
-
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex-1 overflow-y-auto"
+    <>
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: expanded ? 0 : "100%", opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        drag="y"
+        dragControls={dragControls}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 50) {
+            setExpanded(false);
+          }
+        }}
+        className={`fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 dark:from-purple-900 dark:via-pink-900 dark:to-red-900 ${
+          expanded ? "h-screen" : "h-20"
+        } transition-all duration-300 ease-in-out`}
+      >
+        <div className="container mx-auto px-4 h-full flex flex-col">
+          {!expanded && (
+            <div
+              className="flex items-center justify-between h-20"
+              {...handlers}
             >
-              <div className="mt-8 text-center">
-                <motion.img
-                  src={currentTrack?.albumCover || "https://via.placeholder.com/300"}
+              <div className="flex items-center">
+                <img
+                  src={
+                    currentTrack?.albumCover || "https://via.placeholder.com/50"
+                  }
                   alt="Album Cover"
-                  className="w-64 h-64 rounded-lg shadow-2xl mx-auto"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
+                  className="w-12 h-12 rounded-full mr-4"
                 />
-                <h2 className="text-2xl font-bold text-white mt-4">{currentTrack?.title}</h2>
-                <p className="text-xl text-gray-200">{currentTrack?.artist}</p>
-              </div>
-
-              <div className="mt-8">
-                <input
-                  type="range"
-                  min="0"
-                  max={duration}
-                  value={progress}
-                  onChange={handleSeek}
-                  className="w-full accent-yellow-300 bg-gray-300 dark:bg-gray-600 h-2 rounded-lg appearance-none cursor-pointer"
-                />
-                <div className="flex justify-between text-sm text-white mt-2">
-                  <span>{formatTime(progress)}</span>
-                  <span>{formatTime(duration)}</span>
+                <div>
+                  <h3 className="font-bold text-white">
+                    {currentTrack?.title || "No track selected"}
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    {currentTrack?.artist}
+                  </p>
                 </div>
               </div>
-
-              <div className="flex justify-center items-center space-x-8 mt-8">
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => dispatch(toggleShuffle())}
-                  className={`text-white ${shuffleMode ? 'text-yellow-300' : ''}`}
-                >
-                  <ArrowsRightLeftIcon className="h-6 w-6" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => dispatch(previousTrack())}
-                  className="text-white"
-                >
-                  <ChevronLeftIcon className="h-8 w-8" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.3 }}
-                  whileTap={{ scale: 0.9 }}
+              <div className="flex items-center space-x-4">
+                <button
                   onClick={() => dispatch(togglePlay())}
-                  className="bg-white text-purple-600 rounded-full p-4 hover:bg-yellow-300 hover:text-purple-700 transition-colors shadow-lg"
+                  className="text-white"
                 >
                   {isPlaying ? (
-                    <PauseIcon className="h-10 w-10" />
+                    <PauseIcon className="h-8 w-8" />
                   ) : (
-                    <PlayIcon className="h-10 w-10" />
+                    <PlayIcon className="h-8 w-8" />
                   )}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => dispatch(nextTrack())}
+                </button>
+                <button
+                  onClick={() => setExpanded(true)}
                   className="text-white"
                 >
-                  <ChevronRightIcon className="h-8 w-8" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => dispatch(toggleRepeat())}
-                  className={`text-white ${repeatMode ? 'text-yellow-300' : ''}`}
-                >
-                  <ArrowPathRoundedSquareIcon className="h-6 w-6" />
-                </motion.button>
+                  <ChevronRightIcon className="h-6 w-6" />
+                </button>
               </div>
-
-              <div className="mt-8">
-                <h3 className="text-xl font-bold text-white mb-4">Lyrics</h3>
-                <div className="text-gray-200 text-center">
-                  {lyrics.map((line, index) => (
-                    <motion.p
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: index === currentLyricIndex ? 1 : 0.5, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={index === currentLyricIndex ? 'text-yellow-300' : ''}
-                    >
-                      {line}
-                    </motion.p>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <h3 className="text-xl font-bold text-white mb-4">Queue</h3>
-                <div className="space-y-2">
-                  {queue.map((track, index) => (
-                    <motion.div
-                      key={track.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="flex items-center bg-white bg-opacity-10 rounded-lg p-2"
-                    >
-                      <img src={track.albumCover} alt={track.title} className="w-10 h-10 rounded-md mr-3" />
-                      <div>
-                        <p className="text-white font-semibold">{track.title}</p>
-                        <p className="text-gray-300 text-sm">{track.artist}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
 
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <SpeakerWaveIcon className="h-5 w-5 text-white mr-2" />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={handleVolumeChange}
-              className="w-24 accent-yellow-300 bg-gray-300 dark:bg-gray-600 h-2 rounded-lg appearance-none cursor-pointer"
-            />
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="text-white"
-          >
-            <QueueListIcon className="h-6 w-6" />
-          </motion.button>
+          {expanded && (
+            <div className="flex-1 flex flex-col pt-8" {...handlers}>
+              <button
+                onClick={() => setExpanded(false)}
+                className="self-end text-white mb-4"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <motion.img
+                  src={
+                    currentTrack?.albumCover ||
+                    "https://via.placeholder.com/300"
+                  }
+                  alt="Album Cover"
+                  className="w-64 h-64 rounded-lg shadow-lg mb-8"
+                  animate={{ rotate: isPlaying ? 360 : 0 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                />
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {currentTrack?.title || "No track selected"}
+                </h2>
+                <p className="text-xl text-gray-200 mb-8">
+                  {currentTrack?.artist}
+                </p>
+                <div className="w-full max-w-md flex items-center mb-8">
+                  <span className="text-sm text-white mr-2">
+                    {formatTime(progress)}
+                  </span>
+                  <input
+                    type="range"
+                    min="0"
+                    max={duration}
+                    value={progress}
+                    onChange={handleSeek}
+                    className="w-full accent-white"
+                  />
+                  <span className="text-sm text-white ml-2">
+                    {formatTime(duration)}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-8">
+                  <button
+                    onClick={() => dispatch(toggleShuffle())}
+                    className={`text-white ${shuffle ? "opacity-100" : "opacity-50"}`}
+                  >
+                    <ArrowsRightLeftIcon className="h-6 w-6" />
+                  </button>
+                  <button onClick={handlePrevious} className="text-white">
+                    <ChevronLeftIcon className="h-8 w-8" />
+                  </button>
+                  <button
+                    onClick={() => dispatch(togglePlay())}
+                    className="bg-white text-purple-600 rounded-full p-4"
+                  >
+                    {isPlaying ? (
+                      <PauseIcon className="h-8 w-8" />
+                    ) : (
+                      <PlayIcon className="h-8 w-8" />
+                    )}
+                  </button>
+                  <button onClick={handleNext} className="text-white">
+                    <ChevronRightIcon className="h-8 w-8" />
+                  </button>
+                  <button
+                    onClick={() => dispatch(toggleRepeat())}
+                    className={`text-white ${repeat ? "opacity-100" : "opacity-50"}`}
+                  >
+                    <ArrowPathIcon className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="mt-auto mb-4">
+                <button
+                  onClick={() => setShowPlaylist(!showPlaylist)}
+                  className="text-white mb-2"
+                >
+                  <QueueListIcon className="h-6 w-6" />
+                </button>
+                {showPlaylist ? (
+                  <div className="bg-white bg-opacity-10 rounded-lg p-4 max-h-40 overflow-y-auto">
+                    {playlist.map((track) => (
+                      <div
+                        key={track.id}
+                        className="flex justify-between items-center mb-2"
+                      >
+                        <div>
+                          <p className="text-white font-semibold">
+                            {track.title}
+                          </p>
+                          <p className="text-gray-300 text-sm">
+                            {track.artist}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => dispatch(addToQueue(track))}
+                          className="text-white"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-white text-center">
+                    {mockLyrics.split("\n").map((line, index) => (
+                      <p key={index} className="mb-1">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-
+      </motion.div>
       <audio
         ref={audioRef}
         src={currentTrack?.audioUrl}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
       />
-    </motion.div>
+    </>
   );
 };
 
