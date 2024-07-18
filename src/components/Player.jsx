@@ -472,19 +472,18 @@ const Player = () => {
       </AnimatePresence>
 
       {currentTrack && (
-      <audio
-        ref={audioRef}
-        src={currentTrack?.audioUrl}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onCanPlay={() => setIsAudioOperationInProgress(false)}
-        onError={(e) => {
-          console.error("Audio error:", e);
-          setIsPlaying(false);
-          setIsAudioOperationInProgress(false);
-        }}
-      />
-
+        <audio
+          ref={audioRef}
+          src={currentTrack?.audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onCanPlay={() => setIsAudioOperationInProgress(false)}
+          onError={(e) => {
+            console.error("Audio error:", e);
+            setIsPlaying(false);
+            setIsAudioOperationInProgress(false);
+          }}
+        />
       )}
     </motion.div>
   );
