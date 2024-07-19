@@ -13,7 +13,7 @@ const Home = () => {
     // Fetch data from Spotify API
     const fetchData = async () => {
       try {
-        const token = 'BQD1VsNaHM0f_PQ45rWvlmr8Ey68IWUOzNSfIQeSfrlRkY0N2DP_aXrsXx-lR3h0GXiyhrrKMK9mLgw0fClbpCPukWc2vcG7rDSFutbi-AILczYHNqAulpk53mrNuNZSb45R9yeELcKlUtlH6Zv8r60VB96XXHw0ua6fGGi4pw8LBd0FetGrJFkLuOsAe10Jl-25ti_OIoFE0DQwc0TDp-BYlqgQDkbIgBTXVtlxHbzV9Tym6spX9sU-YeD3jzlZo8VzBjn90tFdPRdHcZme7loY';
+        const token = 'BQBdhpCgLZFYR4-oauUK2JKd8MVIshHAOTLFN4bM--ZvKqdnS9ZJzDd_p5rR_8YT8iYZyjAv3iQfNx8U0KwcpHeOglWO4E7Etzl5-hG9y7e3baRn6Ul0DbU291cGhwyTafsURLFtgpog_MCwgmPIGUolpdU5ZSeYeu6G7htSzWVPvIXa-zCiuiDfpUROMQBcVz3EV-OfkEapL5VyHL_9a9eo_56pyR2hOxBHjrAwK5YB3akxVSi-L29G9FCKwofjcDeaG3sweTjti2mtmHwpH32V';
         const headers = { Authorization: `Bearer ${token}` };
 
         const [playlistsRes, releasesRes, tracksRes, genresRes] = await Promise.all([
