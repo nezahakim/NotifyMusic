@@ -189,7 +189,7 @@ const Player = () => {
         height: isExpanded
           ? showLyrics || showQueue
             ? "100vh"
-            : "65vh"
+            : "50vh"
           : "auto",
       }}
       transition={{ duration: 0.3 }}
