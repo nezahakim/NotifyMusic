@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
-import { PlayIcon, PauseIcon, HeartIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { PlayIcon, PauseIcon, HeartIcon } from "@heroicons/react/24/solid";
 
 const Home = () => {
   const [featuredPlaylists, setFeaturedPlaylists] = useState([]);
@@ -9,26 +9,43 @@ const Home = () => {
   const [topTracks, setTopTracks] = useState([]);
   const [genres, setGenres] = useState([]);
 
+  const CLIENT_ID = "44e86430da7d4bd7ae36d59f81aff51e";
+  const CLIENT_SECRET = "52dc1ffae8724a98a73dd92b1123074f";
+
+  let accessToken = null;
+  let tokenExpirationTime = 0;
+
   useEffect(() => {
     // Fetch data from Spotify API
     const fetchData = async () => {
       try {
-        const token = 'BQBdhpCgLZFYR4-oauUK2JKd8MVIshHAOTLFN4bM--ZvKqdnS9ZJzDd_p5rR_8YT8iYZyjAv3iQfNx8U0KwcpHeOglWO4E7Etzl5-hG9y7e3baRn6Ul0DbU291cGhwyTafsURLFtgpog_MCwgmPIGUolpdU5ZSeYeu6G7htSzWVPvIXa-zCiuiDfpUROMQBcVz3EV-OfkEapL5VyHL_9a9eo_56pyR2hOxBHjrAwK5YB3akxVSi-L29G9FCKwofjcDeaG3sweTjti2mtmHwpH32V';
+        const token =
+          "BQBCNxMM6Q8tBudFGR1QwXt4vwlayPQ5hbwhvthSaYVk9guXq96ga3BPFoOqEZTRAyFajrhr9debagcJ2r0ow-gVVnxK7nuTQj_On4-yBFvGQNUuj_9L4pazGasjyxrl9QnD5bHJXICqA5-i0RSV6rmu0gsW7wrdIyEikKaeUArMKUnnvA_cEXqf7_XgIwXGPXOqhlvIQAsWz4olMo91h7MT4ChR7w01_anwBgqF6ouo2AdPtda-COAmsnvHBRaqiGusT8gzU3bBUtuDwV4mNqUl";
         const headers = { Authorization: `Bearer ${token}` };
 
-        const [playlistsRes, releasesRes, tracksRes, genresRes] = await Promise.all([
-          axios.get('https://api.spotify.com/v1/browse/featured-playlists', { headers }),
-          axios.get('https://api.spotify.com/v1/browse/new-releases', { headers }),
-          axios.get('https://api.spotify.com/v1/playlists/37i9dQZEVXbMDoHDwVN2tF/tracks', { headers }),
-          axios.get('https://api.spotify.com/v1/browse/categories', { headers }),
-        ]);
+        const [playlistsRes, releasesRes, tracksRes, genresRes] =
+          await Promise.all([
+            axios.get("https://api.spotify.com/v1/browse/featured-playlists", {
+              headers,
+            }),
+            axios.get("https://api.spotify.com/v1/browse/new-releases", {
+              headers,
+            }),
+            axios.get(
+              "https://api.spotify.com/v1/playlists/37i9dQZEVXbMDoHDwVN2tF/tracks",
+              { headers },
+            ),
+            axios.get("https://api.spotify.com/v1/browse/categories", {
+              headers,
+            }),
+          ]);
 
         setFeaturedPlaylists(playlistsRes.data.playlists.items);
         setNewReleases(releasesRes.data.albums.items);
-        setTopTracks(tracksRes.data.items.map(item => item.track));
+        setTopTracks(tracksRes.data.items.map((item) => item.track));
         setGenres(genresRes.data.categories.items);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -83,7 +100,11 @@ const FeaturedPlaylistCard = ({ playlist }) => (
     whileHover={{ scale: 1.05 }}
     className="bg-gray-800 rounded-lg overflow-hidden shadow-lg"
   >
-    <img src={playlist.images[0].url} alt={playlist.name} className="w-full h-48 object-cover" />
+    <img
+      src={playlist.images[0].url}
+      alt={playlist.name}
+      className="w-full h-48 object-cover"
+    />
     <div className="p-4">
       <h3 className="font-semibold text-lg mb-2">{playlist.name}</h3>
       <p className="text-gray-400 text-sm">{playlist.tracks.total} tracks</p>
@@ -92,11 +113,12 @@ const FeaturedPlaylistCard = ({ playlist }) => (
 );
 
 const NewReleaseCard = ({ album }) => (
-  <motion.div
-    whileHover={{ scale: 1.05 }}
-    className="flex-shrink-0 w-40"
-  >
-    <img src={album.images[1].url} alt={album.name} className="w-40 h-40 object-cover rounded-lg shadow-lg" />
+  <motion.div whileHover={{ scale: 1.05 }} className="flex-shrink-0 w-40">
+    <img
+      src={album.images[1].url}
+      alt={album.name}
+      className="w-40 h-40 object-cover rounded-lg shadow-lg"
+    />
     <h3 className="mt-2 font-semibold">{album.name}</h3>
     <p className="text-gray-400 text-sm">{album.artists[0].name}</p>
   </motion.div>
@@ -107,7 +129,11 @@ const TopTrackItem = ({ track }) => (
     whileHover={{ scale: 1.02 }}
     className="flex items-center space-x-4 bg-gray-800 p-4 rounded-lg"
   >
-    <img src={track.album.images[2].url} alt={track.name} className="w-12 h-12 rounded" />
+    <img
+      src={track.album.images[2].url}
+      alt={track.name}
+      className="w-12 h-12 rounded"
+    />
     <div className="flex-grow">
       <h3 className="font-semibold">{track.name}</h3>
       <p className="text-gray-400 text-sm">{track.artists[0].name}</p>
@@ -128,7 +154,11 @@ const GenreCard = ({ genre }) => (
     whileHover={{ scale: 1.05 }}
     className="relative overflow-hidden rounded-lg shadow-lg"
   >
-    <img src={genre.icons[0].url} alt={genre.name} className="w-full h-32 object-cover" />
+    <img
+      src={genre.icons[0].url}
+      alt={genre.name}
+      className="w-full h-32 object-cover"
+    />
     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <h3 className="text-lg font-semibold">{genre.name}</h3>
     </div>
