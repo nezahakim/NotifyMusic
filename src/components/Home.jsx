@@ -12,15 +12,27 @@ const Home = () => {
   const CLIENT_ID = "44e86430da7d4bd7ae36d59f81aff51e";
   const CLIENT_SECRET = "52dc1ffae8724a98a73dd92b1123074f";
 
-  let accessToken = null;
-  let tokenExpirationTime = 0;
+  let spotifyToken = "";
 
+  const getSpotifyToken = async () => {
+    const response = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization:
+          "Basic " + btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET),
+      },
+      body: "grant_type=client_credentials",
+    });
+    const data = await response.json();
+    spotifyToken = data.access_token;
+  };
+  getSpotifyToken();
   useEffect(() => {
     // Fetch data from Spotify API
     const fetchData = async () => {
       try {
-        const token =
-          "BQBCNxMM6Q8tBudFGR1QwXt4vwlayPQ5hbwhvthSaYVk9guXq96ga3BPFoOqEZTRAyFajrhr9debagcJ2r0ow-gVVnxK7nuTQj_On4-yBFvGQNUuj_9L4pazGasjyxrl9QnD5bHJXICqA5-i0RSV6rmu0gsW7wrdIyEikKaeUArMKUnnvA_cEXqf7_XgIwXGPXOqhlvIQAsWz4olMo91h7MT4ChR7w01_anwBgqF6ouo2AdPtda-COAmsnvHBRaqiGusT8gzU3bBUtuDwV4mNqUl";
+        const token = spotifyToken;
         const headers = { Authorization: `Bearer ${token}` };
 
         const [playlistsRes, releasesRes, tracksRes, genresRes] =
