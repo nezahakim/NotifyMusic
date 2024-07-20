@@ -19,8 +19,7 @@ const cache = {
     cache.data.set(key, item);
   },
   get: (key) => {
-    const cachedItem =
-      cache.data.get(key) || JSON.parse(localStorage.getItem(key));
+    const cachedItem = cache.data.get(key) || JSON.parse(localStorage.getItem(key));
     if (!cachedItem) return null;
     if (new Date().getTime() > cachedItem.expiry) {
       cache.data.delete(key);
@@ -40,8 +39,7 @@ const getSpotifyToken = async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization:
-        "Basic " + btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET),
+      Authorization: "Basic " + btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET),
     },
     body: "grant_type=client_credentials",
   });
@@ -99,30 +97,17 @@ const findBestSpotifyMatch = (jamendoTrack, spotifyTracks) => {
 
 const calculateMatchScore = (jamendoTrack, spotifyTrack) => {
   let score = 0;
-  if (jamendoTrack.name.toLowerCase() === spotifyTrack.name.toLowerCase())
-    score += 3;
+  if (jamendoTrack.name.toLowerCase() === spotifyTrack.name.toLowerCase()) score += 3;
   else if (
     jamendoTrack.name.toLowerCase().includes(spotifyTrack.name.toLowerCase()) ||
     spotifyTrack.name.toLowerCase().includes(jamendoTrack.name.toLowerCase())
-  )
-    score += 2;
-  if (
-    jamendoTrack.artist_name.toLowerCase() ===
-    spotifyTrack.artists[0].name.toLowerCase()
-  )
-    score += 3;
+  ) score += 2;
+  if (jamendoTrack.artist_name.toLowerCase() === spotifyTrack.artists[0].name.toLowerCase()) score += 3;
   else if (
-    jamendoTrack.artist_name
-      .toLowerCase()
-      .includes(spotifyTrack.artists[0].name.toLowerCase()) ||
-    spotifyTrack.artists[0].name
-      .toLowerCase()
-      .includes(jamendoTrack.artist_name.toLowerCase())
-  )
-    score += 2;
-  const durationDiff = Math.abs(
-    jamendoTrack.duration - spotifyTrack.duration_ms / 1000,
-  );
+    jamendoTrack.artist_name.toLowerCase().includes(spotifyTrack.artists[0].name.toLowerCase()) ||
+    spotifyTrack.artists[0].name.toLowerCase().includes(jamendoTrack.artist_name.toLowerCase())
+  ) score += 2;
+  const durationDiff = Math.abs(jamendoTrack.duration - spotifyTrack.duration_ms / 1000);
   if (durationDiff <= 5) score += 2;
   return score;
 };
@@ -194,8 +179,7 @@ export const fetchPlaylist = async (limit = 20, offset = 0) => {
   }
 };
 
-export const fetchLyrics = async (trackId) =>
-  "Lyrics are not available through the Jamendo API.";
+export const fetchLyrics = async (trackId) => "Lyrics are not available through the Jamendo API.";
 
 export const getTrackInfo = async (trackId) => {
   try {
