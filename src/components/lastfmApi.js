@@ -1,15 +1,41 @@
+const JAMENDO_CLIENT_ID = "e1372904";
+const JAMENDO_BASE_URL = "https://api.jamendo.com/v3.0";
 const SPOTIFY_CLIENT_ID = "44e86430da7d4bd7ae36d59f81aff51e";
 const SPOTIFY_CLIENT_SECRET = "52dc1ffae8724a98a73dd92b1123074f";
 const SPOTIFY_BASE_URL = "https://api.spotify.com/v1";
-const JAMENDO_CLIENT_ID = "e1372904";
-const JAMENDO_BASE_URL = "https://api.jamendo.com/v3.0";
+
 let spotifyToken = "";
 
-const cache = new Map();
-const audioCache = new Map();
+// Use a more robust caching mechanism
+const cache = {
+  data: new Map(),
+  audio: new Map(),
+  set: (key, value, expirationInMinutes = 60) => {
+    const item = {
+      value,
+      expiry: new Date().getTime() + expirationInMinutes * 60000,
+    };
+    localStorage.setItem(key, JSON.stringify(item));
+    cache.data.set(key, item);
+  },
+  get: (key) => {
+    const cachedItem =
+      cache.data.get(key) || JSON.parse(localStorage.getItem(key));
+    if (!cachedItem) return null;
+    if (new Date().getTime() > cachedItem.expiry) {
+      cache.data.delete(key);
+      localStorage.removeItem(key);
+      return null;
+    }
+    return cachedItem.value;
+  },
+};
 
 const getSpotifyToken = async () => {
   if (spotifyToken) return spotifyToken;
+  const cachedToken = cache.get("spotifyToken");
+  if (cachedToken) return cachedToken;
+
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
@@ -21,25 +47,20 @@ const getSpotifyToken = async () => {
   });
   const data = await response.json();
   spotifyToken = data.access_token;
+  cache.set("spotifyToken", spotifyToken, 50); // Cache for 50 minutes
   return spotifyToken;
 };
 
 const fetchWithCache = async (url, options = {}) => {
   const cacheKey = url + JSON.stringify(options);
-  if (cache.has(cacheKey)) return cache.get(cacheKey);
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) return cachedData;
+
   const response = await fetch(url, options);
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   const data = await response.json();
   cache.set(cacheKey, data);
   return data;
-};
-
-const fetchFromSpotify = async (endpoint, params = {}) => {
-  const token = await getSpotifyToken();
-  const queryParams = new URLSearchParams(params);
-  return fetchWithCache(`${SPOTIFY_BASE_URL}${endpoint}?${queryParams}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
 };
 
 const fetchFromJamendo = async (endpoint, params = {}) => {
@@ -51,11 +72,20 @@ const fetchFromJamendo = async (endpoint, params = {}) => {
   return fetchWithCache(`${JAMENDO_BASE_URL}${endpoint}?${queryParams}`);
 };
 
+const fetchFromSpotify = async (endpoint, params = {}) => {
+  const token = await getSpotifyToken();
+  const queryParams = new URLSearchParams(params);
+  return fetchWithCache(`${SPOTIFY_BASE_URL}${endpoint}?${queryParams}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
 const preloadAudio = (url) => {
-  if (audioCache.has(url)) return;
-  const audio = new Audio(url);
+  if (cache.audio.has(url)) return;
+  const audio = new Audio();
   audio.preload = "auto";
-  audioCache.set(url, audio);
+  audio.src = url;
+  cache.audio.set(url, audio);
 };
 
 const findBestSpotifyMatch = (jamendoTrack, spotifyTracks) => {
@@ -97,38 +127,66 @@ const calculateMatchScore = (jamendoTrack, spotifyTrack) => {
   return score;
 };
 
-export const fetchPlaylist = async () => {
+// Worker for background processing
+const worker = new Worker(
+  URL.createObjectURL(
+    new Blob(
+      [
+        `
+        self.onmessage = async function(e) {
+          const { type, data } = e.data;
+          if (type === 'fetchSpotifyData') {
+            const { trackName, artistName } = data;
+            const response = await fetch('${SPOTIFY_BASE_URL}/search?q=track:' + encodeURIComponent(trackName) + ' artist:' + encodeURIComponent(artistName) + '&type=track&limit=5', {
+              headers: { 'Authorization': 'Bearer ' + '${await getSpotifyToken()}' }
+            });
+            const result = await response.json();
+            self.postMessage({ type: 'spotifyDataFetched', data: result });
+          }
+        }
+      `,
+      ],
+      { type: "application/javascript" },
+    ),
+  ),
+);
+
+worker.onmessage = function (e) {
+  const { type, data } = e.data;
+  if (type === "spotifyDataFetched") {
+    // Handle the Spotify data here
+    console.log("Spotify data fetched in background:", data);
+  }
+};
+
+export const fetchPlaylist = async (limit = 20, offset = 0) => {
   try {
     const jamendoData = await fetchFromJamendo("/tracks/", {
-      limit: 20,
+      limit,
+      offset,
       order: "popularity_total",
     });
-    const playlist = await Promise.all(
-      jamendoData.results.map(async (track) => {
-        const spotifyData = await fetchFromSpotify("/search", {
-          q: `track:${track.name} artist:${track.artist_name}`,
-          type: "track",
-          limit: 5,
-        });
-        const bestSpotifyMatch = findBestSpotifyMatch(
-          track,
-          spotifyData.tracks?.items,
-        );
-        preloadAudio(track.audio);
-        return {
-          id: track.id,
-          title: track.name,
-          artist: track.artist_name,
-          albumCover: bestSpotifyMatch?.album.images[1]?.url || track.image,
-          audioUrl: track.audio,
-          duration: track.duration,
-          album: track.album_name,
-          releaseDate: track.releasedate,
-          genre: track.genre,
-          spotifyId: bestSpotifyMatch?.id || null,
-        };
-      }),
-    );
+    const playlist = jamendoData.results.map((track) => ({
+      id: track.id,
+      title: track.name,
+      artist: track.artist_name,
+      albumCover: track.image,
+      audioUrl: track.audio,
+      duration: track.duration,
+      album: track.album_name,
+      releaseDate: track.releasedate,
+      genre: track.genre,
+    }));
+
+    // Preload audio and fetch Spotify data in the background
+    playlist.forEach((track, index) => {
+      if (index < 5) preloadAudio(track.audioUrl); // Preload first 5 tracks
+      worker.postMessage({
+        type: "fetchSpotifyData",
+        data: { trackName: track.title, artistName: track.artist },
+      });
+    });
+
     return playlist;
   } catch (error) {
     console.error("Error fetching playlist:", error);
@@ -141,34 +199,27 @@ export const fetchLyrics = async (trackId) =>
 
 export const getTrackInfo = async (trackId) => {
   try {
-    const [jamendoData, spotifyData] = await Promise.all([
-      fetchFromJamendo(`/tracks/`, { id: trackId }),
-      fetchFromSpotify("/search", {
-        q: `track:${trackId}`,
-        type: "track",
-        limit: 5,
-      }),
-    ]);
-    const jamendoTrack = jamendoData.results[0];
-    const bestSpotifyMatch = findBestSpotifyMatch(
-      jamendoTrack,
-      spotifyData.tracks?.items,
-    );
-    preloadAudio(jamendoTrack.audio);
+    const jamendoData = await fetchFromJamendo(`/tracks/`, { id: trackId });
+    const track = jamendoData.results[0];
+    preloadAudio(track.audio);
     return {
-      id: jamendoTrack.id,
-      title: jamendoTrack.name,
-      artist: jamendoTrack.artist_name,
-      album: jamendoTrack.album_name,
-      albumCover: bestSpotifyMatch?.album.images[1]?.url || jamendoTrack.image,
-      duration: jamendoTrack.duration,
-      audioUrl: jamendoTrack.audio,
-      releaseDate: jamendoTrack.releasedate,
-      genre: jamendoTrack.genre,
-      spotifyId: bestSpotifyMatch?.id || null,
+      id: track.id,
+      title: track.name,
+      artist: track.artist_name,
+      album: track.album_name,
+      albumCover: track.image,
+      duration: track.duration,
+      audioUrl: track.audio,
+      releaseDate: track.releasedate,
+      genre: track.genre,
     };
   } catch (error) {
     console.error("Error getting track info:", error);
     return null;
   }
+};
+
+// Function to load more tracks (for infinite scrolling)
+export const loadMoreTracks = async (offset) => {
+  return fetchPlaylist(20, offset);
 };
