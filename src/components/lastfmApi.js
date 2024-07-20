@@ -1,6 +1,6 @@
 const SPOTIFY_CLIENT_ID = "44e86430da7d4bd7ae36d59f81aff51e";
 const SPOTIFY_CLIENT_SECRET = "52dc1ffae8724a98a73dd92b1123074f";
-const JAMENDO_CLIENT_ID = "e1372904";
+const JAMENDO_CLIENT_ID = "e1372904"; // Replace with your actual Jamendo Client ID
 const SPOTIFY_BASE_URL = "https://api.spotify.com/v1";
 const JAMENDO_BASE_URL = "https://api.jamendo.com/v3.0";
 
@@ -148,23 +148,23 @@ export const getTrackInfo = async (trackId) => {
       fetchFromJamendo("/tracks/", { id: trackId }),
     ]);
 
-    const track = jamendoTrack.results[0] || spotifyTrack;
+    const track = jamendoTrack?.results?.[0] || spotifyTrack;
 
-    if (track.audio) {
+    if (track?.audio) {
       preloadAudio(track.audio);
     }
 
     return {
-      id: track.id,
-      title: track.name,
-      artist: track.artist_name || spotifyTrack.artists[0].name,
-      album: track.album_name || spotifyTrack.album.name,
-      albumCover: spotifyTrack.album.images[1]?.url || track.image,
-      duration: track.duration || spotifyTrack.duration_ms / 1000,
-      audioUrl: track.audio || null,
-      releaseDate: track.releasedate || spotifyTrack.album.release_date,
-      genre: track.genre || null,
-      spotifyId: spotifyTrack.id,
+      id: track?.id,
+      title: track?.name,
+      artist: track?.artist_name || spotifyTrack?.artists?.[0]?.name,
+      album: track?.album_name || spotifyTrack?.album?.name,
+      albumCover: spotifyTrack?.album?.images?.[1]?.url || track?.image,
+      duration: track?.duration || spotifyTrack?.duration_ms / 1000,
+      audioUrl: track?.audio || null,
+      releaseDate: track?.releasedate || spotifyTrack?.album?.release_date,
+      genre: track?.genre || null,
+      spotifyId: spotifyTrack?.id,
     };
   } catch (error) {
     console.error("Error getting track info:", error);
