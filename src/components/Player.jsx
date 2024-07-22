@@ -1,8 +1,6 @@
 // Player.js
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fetchPlaylist, fetchLyrics, getTrackInfo } from "./lastfmApi";
 import {
   PlayIcon,
   PauseIcon,
@@ -17,7 +15,20 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
+import {
+  getSpotifyAccessToken,
+  fetchSpotifyPlaylist,
+  fetchJamendoTrack,
+  fetchLyrics,
+} from "./api";
+import {
+  cacheTrack,
+  getCachedTrack,
+  prefetchNextTracks,
+} from "./cachingService";
+import SpotifyWebApi from "spotify-web-api-js";
 
+const spotifyApi = new SpotifyWebApi();
 const formatTime = (time) => {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
@@ -35,56 +46,89 @@ const Player = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [queue, setQueue] = useState([]);
+  const [playlist, setPlaylist] = useState([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [duration, setDuration] = useState(0);
   const [lyrics, setLyrics] = useState("");
 
   const audioRef = useRef(null);
-  const [playlist, setPlaylist] = useState([]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isAudioOperationInProgress, setIsAudioOperationInProgress] =
+    useState(false);
 
-  const fetchQueueAndCurrentTrack = useCallback(async () => {
+  const fetchQueue = useCallback(async () => {
     try {
-      const fetchedPlaylist = await fetchPlaylist();
-      setPlaylist(fetchedPlaylist);
-      setQueue(fetchedPlaylist.slice(1, 11));
-      setCurrentTrack(fetchedPlaylist[0]);
+      const tracks = await fetchSpotifyPlaylist("37i9dQZEVXbMDoHDwVN2tF"); // Example playlist ID (Global Top 50)
+      setPlaylist(tracks);
+      setQueue(tracks.slice(1, 11)); // Set the next 10 tracks as the queue
     } catch (error) {
-      console.error("Error fetching queue and current track:", error);
+      console.error("Error fetching queue:", error);
     }
   }, []);
 
-  useEffect(() => {
-    fetchQueueAndCurrentTrack();
-  }, [fetchQueueAndCurrentTrack]);
-
   const togglePlay = useCallback(() => {
-    if (audioRef.current) {
+    if (audioRef.current && !isAudioOperationInProgress) {
+      setIsAudioOperationInProgress(true);
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
+        setIsAudioOperationInProgress(false);
       } else {
-        audioRef.current.play().catch((error) => {
-          console.error("Error playing audio:", error);
-        });
+        audioRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((error) => {
+            console.error("Error playing audio:", error);
+          })
+          .finally(() => {
+            setIsAudioOperationInProgress(false);
+          });
       }
-      setIsPlaying(!isPlaying);
     }
-  }, [isPlaying]);
+  }, [isPlaying, isAudioOperationInProgress]);
 
   const handleNextTrack = useCallback(() => {
-    if (currentTrackIndex < playlist.length - 1) {
+    if (
+      currentTrackIndex < playlist.length - 1 &&
+      !isAudioOperationInProgress
+    ) {
+      setIsAudioOperationInProgress(true);
       setCurrentTrackIndex((prevIndex) => prevIndex + 1);
       setCurrentTrack(playlist[currentTrackIndex + 1]);
       setIsPlaying(true);
+      setIsAudioOperationInProgress(false);
     }
-  }, [currentTrackIndex, playlist]);
+  }, [currentTrackIndex, playlist, isAudioOperationInProgress]);
 
   const handlePreviousTrack = useCallback(() => {
-    if (currentTrackIndex > 0) {
+    if (currentTrackIndex > 0 && !isAudioOperationInProgress) {
+      setIsAudioOperationInProgress(true);
       setCurrentTrackIndex((prevIndex) => prevIndex - 1);
       setCurrentTrack(playlist[currentTrackIndex - 1]);
       setIsPlaying(true);
+      setIsAudioOperationInProgress(false);
     }
-  }, [currentTrackIndex, playlist]);
+  }, [currentTrackIndex, playlist, isAudioOperationInProgress]);
+
+  const fetchCurrentTrack = useCallback(async () => {
+    if (playlist.length > 0) {
+      const track = playlist[currentTrackIndex];
+      setCurrentTrack(track);
+      const jamendoTrack = await fetchJamendoTrack(track.title, track.artist);
+      if (jamendoTrack) {
+        const updatedTrack = { ...track, ...jamendoTrack };
+        setCurrentTrack(updatedTrack);
+        // Cache the current track
+        cacheTrack(updatedTrack);
+
+        // Prefetch next tracks
+        prefetchNextTracks(playlist, currentTrackIndex);
+      } else {
+        console.log("Jamendo track not found");
+      }
+    }
+  }, [playlist, currentTrackIndex]);
 
   const playTrackFromQueue = useCallback(
     (index) => {
@@ -99,17 +143,56 @@ const Player = () => {
   );
 
   useEffect(() => {
+    const initializePlayer = async () => {
+      const accessToken = await getSpotifyAccessToken();
+      spotifyApi.setAccessToken(accessToken);
+      await fetchQueue();
+    };
+
+    initializePlayer();
+  }, [fetchQueue]);
+
+  useEffect(() => {
+    if (!currentTrack) {
+      fetchCurrentTrack();
+    }
+  }, [currentTrack, fetchCurrentTrack]);
+
+  useEffect(() => {
     if (audioRef.current && currentTrack && currentTrack.audioUrl) {
-      audioRef.current.src = currentTrack.audioUrl;
-      audioRef.current.load();
+      const loadAudio = async () => {
+        const cachedTrack = await getCachedTrack(currentTrack.audioUrl);
+        if (cachedTrack) {
+          const objectUrl = URL.createObjectURL(cachedTrack);
+          audioRef.current.src = objectUrl;
+        } else {
+          audioRef.current.src = currentTrack.audioUrl;
+        }
+        audioRef.current.load();
+      };
+      loadAudio();
+    }
+  }, [currentTrack]);
+
+  useEffect(() => {
+    if (audioRef.current && !isAudioOperationInProgress) {
+      setIsAudioOperationInProgress(true);
       if (isPlaying) {
-        audioRef.current.play().catch((error) => {
-          console.error("Error playing audio:", error);
-          setIsPlaying(false);
-        });
+        audioRef.current
+          .play()
+          .catch((error) => {
+            console.error("Error in play effect:", error);
+            setIsPlaying(false);
+          })
+          .finally(() => {
+            setIsAudioOperationInProgress(false);
+          });
+      } else {
+        audioRef.current.pause();
+        setIsAudioOperationInProgress(false);
       }
     }
-  }, [currentTrack, isPlaying]);
+  }, [isPlaying]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
@@ -133,50 +216,77 @@ const Player = () => {
     }
   }, []);
 
-  const toggleShuffle = useCallback(
-    () => setIsShuffled(!isShuffled),
-    [isShuffled],
-  );
+  const toggleShuffle = useCallback(() => {
+    setIsShuffled((prev) => !prev);
+    // Implement shuffle logic here
+  }, []);
 
   const toggleRepeat = useCallback(() => {
     const modes = ["off", "track", "context"];
-    const currentIndex = modes.indexOf(repeatMode);
-    setRepeatMode(modes[(currentIndex + 1) % modes.length]);
-  }, [repeatMode]);
+    setRepeatMode((prev) => modes[(modes.indexOf(prev) + 1) % modes.length]);
+    // Implement repeat logic here
+  }, []);
 
-  const handleLike = useCallback(() => console.log("Liked!"), []);
-  const handleShare = useCallback(() => console.log("Shared!"), []);
+  const handleLike = useCallback(() => {
+    console.log("Liked!");
+    // Implement like functionality here
+  }, []);
 
-  const toggleExpand = useCallback(
-    () => setIsExpanded(!isExpanded),
-    [isExpanded],
-  );
+  const handleShare = useCallback(() => {
+    console.log("Shared!");
+    // Implement share functionality here
+  }, []);
+
+  const toggleExpand = useCallback(() => setIsExpanded((prev) => !prev), []);
 
   const handleProgressChange = useCallback(
     (e) => {
       const newProgress = parseFloat(e.target.value);
-      if (audioRef.current && !isNaN(duration) && duration > 0) {
+      if (
+        audioRef.current &&
+        !isNaN(duration) &&
+        duration > 0 &&
+        !isAudioOperationInProgress
+      ) {
+        setIsAudioOperationInProgress(true);
         const newTime = (newProgress / 100) * duration;
         audioRef.current.currentTime = newTime;
         setProgress(newProgress);
+        setIsAudioOperationInProgress(false);
       }
     },
-    [duration],
+    [duration, isAudioOperationInProgress],
   );
 
-  const toggleLyrics = useCallback(async () => {
+  const handleProgressMouseDown = useCallback(() => {
+    setIsPlaying(false);
+  }, []);
+
+  const handleProgressMouseUp = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch((error) => {
+        console.error("Error playing audio:", error);
+      });
+      setIsPlaying(true);
+    }
+  }, []);
+
+  const handleShowLyrics = useCallback(async () => {
     if (!showLyrics && currentTrack) {
-      const fetchedLyrics = await fetchLyrics(currentTrack.id);
+      const fetchedLyrics = await fetchLyrics(
+        currentTrack.title,
+        currentTrack.artist,
+      );
       setLyrics(fetchedLyrics);
     }
-    setShowLyrics(!showLyrics);
+    setShowLyrics((prev) => !prev);
     setShowQueue(false);
   }, [showLyrics, currentTrack]);
 
-  const toggleQueue = useCallback(() => {
-    setShowQueue(!showQueue);
+  const handleShowQueue = useCallback(() => {
+    setShowQueue((prev) => !prev);
     setShowLyrics(false);
-  }, [showQueue]);
+  }, []);
 
   if (!currentTrack) {
     return <div>Loading...</div>;
@@ -184,14 +294,10 @@ const Player = () => {
 
   return (
     <motion.div
-      className={`fixed bottom-0 left-0 right-0 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg text-white p-4`}
-      animate={{
-        height: isExpanded
-          ? showLyrics || showQueue
-            ? "100vh"
-            : "50vh"
-          : "auto",
-      }}
+      className={`fixed bottom-0 left-0 right-0 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg text-white p-4 ${
+        isExpanded ? "h-screen" : ""
+      }`}
+      animate={{ height: isExpanded ? "100vh" : "auto" }}
       transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto max-w-6xl">
@@ -229,6 +335,7 @@ const Player = () => {
             )}
           </button>
         </div>
+
         {isExpanded && (
           <div className="mb-8">
             <div className="flex justify-center space-x-8 mb-6">
@@ -275,8 +382,12 @@ const Player = () => {
                 type="range"
                 min="0"
                 max="100"
-                value={progress}
+                value={isNaN(progress) ? 0 : progress}
                 onChange={handleProgressChange}
+                onMouseDown={handleProgressMouseDown}
+                onMouseUp={handleProgressMouseUp}
+                onTouchStart={handleProgressMouseDown}
+                onTouchEnd={handleProgressMouseUp}
                 className="flex-grow h-2 bg-gray-700 rounded-full overflow-hidden appearance-none"
               />
               <span className="text-sm text-gray-400">
@@ -313,6 +424,7 @@ const Player = () => {
             </div>
           </div>
         )}
+
         {!isExpanded && (
           <div className="flex items-center space-x-4">
             <input
@@ -325,7 +437,7 @@ const Player = () => {
             />
             <div className="flex items-center space-x-4">
               <button
-                onClick={handlePreviousTrack}
+                onClick={() => (audioRef.current.currentTime -= 10)}
                 className="text-gray-400 hover:text-white"
               >
                 <BackwardIcon className="h-5 w-5" />
@@ -341,7 +453,7 @@ const Player = () => {
                 )}
               </button>
               <button
-                onClick={handleNextTrack}
+                onClick={() => (audioRef.current.currentTime += 10)}
                 className="text-gray-400 hover:text-white"
               >
                 <ForwardIcon className="h-5 w-5" />
@@ -349,62 +461,110 @@ const Player = () => {
             </div>
           </div>
         )}
+
         <div className="flex justify-center mt-4 space-x-8">
           <button
-            onClick={toggleLyrics}
+            onClick={handleShowLyrics}
             className="text-sm flex items-center space-x-1 hover:text-pink-400 transition-colors"
           >
             <MicrophoneIcon className="h-4 w-4" />
             <span>Lyrics</span>
           </button>
           <button
-            onClick={toggleQueue}
+            onClick={handleShowQueue}
             className="text-sm flex items-center space-x-1 hover:text-blue-400 transition-colors"
           >
             <QueueListIcon className="h-4 w-4" />
             <span>Queue</span>
           </button>
         </div>
+
+        <AnimatePresence>
+          {showLyrics && (
+            <LyricsPanel lyrics={lyrics} onClose={() => setShowLyrics(false)} />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showQueue && (
+            <QueuePanel
+              queue={queue}
+              onClose={() => setShowQueue(false)}
+              onPlayTrack={playTrackFromQueue}
+            />
+          )}
+        </AnimatePresence>
       </div>
-      {showLyrics && (
-        <div className="mt-4 p-4 bg-gray-800 rounded-lg max-h-[50vh] overflow-y-auto">
-          <h2 className="text-2xl font-bold mb-4">Lyrics</h2>
-          <p className="whitespace-pre-line">{lyrics}</p>
-        </div>
-      )}
-      {showQueue && (
-        <div className="mt-4 p-4 bg-gray-800 rounded-lg max-h-[50vh] overflow-y-auto">
-          <h2 className="text-2xl font-bold mb-4">Up Next</h2>
-          <ul>
-            {queue.map((track, index) => (
-              <li
-                key={track.id}
-                className="flex items-center space-x-4 mb-4 cursor-pointer hover:bg-gray-700 p-2 rounded"
-                onClick={() => playTrackFromQueue(index)}
-              >
-                <img
-                  src={track.albumCover}
-                  alt={track.title}
-                  className="w-12 h-12 rounded"
-                />
-                <div>
-                  <p className="font-semibold">{track.title}</p>
-                  <p className="text-sm text-gray-400">{track.artist}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
       {currentTrack && (
         <audio
           ref={audioRef}
-          src={currentTrack.audioUrl}
+          src={currentTrack?.audioUrl}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onEnded={handleNextTrack}
+          onCanPlay={() => setIsAudioOperationInProgress(false)}
+          onError={(e) => {
+            console.error("Audio error:", e);
+            setIsPlaying(false);
+            setIsAudioOperationInProgress(false);
+          }}
         />
       )}
+    </motion.div>
+  );
+};
+
+const LyricsPanel = ({ lyrics, onClose }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 50 }}
+    className="bottom-full left-0 right-0 bg-gray-900 p-6 rounded-t-lg max-h-[50vh] overflow-y-auto"
+  >
+    <h2 className="text-2xl font-bold mb-4">Lyrics</h2>
+    <p className="whitespace-pre-line">{lyrics}</p>
+    <button
+      onClick={onClose}
+      className="mt-4 bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition-colors"
+    >
+      Close
+    </button>
+  </motion.div>
+);
+
+const QueuePanel = ({ queue, onClose, onPlayTrack }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 50 }}
+      className="bottom-full left-0 right-0 bg-gray-900 p-6 rounded-t-lg max-h-[50vh] overflow-y-auto"
+    >
+      <h2 className="text-2xl font-bold mb-4">Up Next</h2>
+      <ul>
+        {queue.map((track, index) => (
+          <li
+            key={track.id}
+            className="flex items-center space-x-4 mb-4 cursor-pointer hover:bg-gray-700 p-2 rounded"
+            onClick={() => onPlayTrack(index)}
+          >
+            <img
+              src={track.albumCover}
+              alt={track.title}
+              className="w-12 h-12 rounded"
+            />
+            <div>
+              <p className="font-semibold">{track.title}</p>
+              <p className="text-sm text-gray-400">{track.artist}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <button
+        onClick={onClose}
+        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+      >
+        Close
+      </button>
     </motion.div>
   );
 };

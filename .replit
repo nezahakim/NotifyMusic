@@ -1,4 +1,5 @@
 modules = ["nodejs-20", "web"]
+run = "npm run dev"
 [nix]
 channel = "stable-24_05"
 
@@ -10,3 +11,6 @@ externalPort = 80
 localPort = 5173
 externalPort = 5173
 exposeLocalhost = true
+
+[deployment]
+run = ["sh", "-c", "npm run dev"]

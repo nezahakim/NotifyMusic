@@ -27,7 +27,7 @@ function App() {
             </Routes>
           </main>
           <Player />
-          <DarkModeToggle />
+          {/* <DarkModeToggle /> */}
         </div>
       </Router>
       <Toaster position="top-right" />
