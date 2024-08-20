@@ -1,14 +1,17 @@
 // api.js
+
 import axios from "axios";
 import SpotifyWebApi from "spotify-web-api-js";
 
 const spotifyApi = new SpotifyWebApi();
-const JAMENDO_API_BASE = "https://api.jamendo.com/v3.0";
-const JAMENDO_CLIENT_ID = "e1372904"; // Replace with your actual Jamendo Client ID
+
+const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
+const YOUTUBE_API_KEY = "AIzaSyD6dMrDgFbjiEbYV_RKdxY3RX1KAzzyisg"; // Replace with your actual YouTube API key
 
 export const getSpotifyAccessToken = async () => {
   const clientId = "44e86430da7d4bd7ae36d59f81aff51e";
   const clientSecret = "52dc1ffae8724a98a73dd92b1123074f";
+
   try {
     const result = await axios.post(
       "https://accounts.spotify.com/api/token",
@@ -42,32 +45,71 @@ export const fetchSpotifyPlaylist = async (playlistId) => {
   }
 };
 
-export const fetchJamendoTrack = async (trackName, artistName) => {
+// export const fetchYouTubeVideo = async (trackName, artistName) => {
+//   try {
+//     const response = await axios.get(`${YOUTUBE_API_BASE}/search`, {
+//       params: {
+//         part: "snippet",
+//         q: `${trackName} ${artistName} official audio`,
+//         type: "video",
+//         maxResults: 1,
+//         key: YOUTUBE_API_KEY,
+//       },
+//     });
+
+//     if (response.data.items.length > 0) {
+//       const video = response.data.items[0];
+//       return {
+//         videoId: video.id.videoId,
+//         title: video.snippet.title,
+//         thumbnailUrl: video.snippet.thumbnails.default.url,
+//       };
+//     } else {
+//       console.log("No video found");
+//       return null;
+//     }
+//   } catch (error) {
+//     console.error("Error fetching YouTube video:", error);
+//     throw error;
+//   }
+// };
+
+export const fetchYouTubeVideo = async (trackName, artistName) => {
   try {
-    const response = await axios.get(`${JAMENDO_API_BASE}/tracks`, {
+    const response = await axios.get(`${YOUTUBE_API_BASE}/search`, {
       params: {
-        client_id: JAMENDO_CLIENT_ID,
-        format: "json",
-        limit: 1,
-        name: trackName,
-        artist_name: artistName,
+        part: "snippet",
+        q: `${trackName} ${artistName} official audio`,
+        type: "video",
+        maxResults: 5,
+        key: YOUTUBE_API_KEY,
       },
     });
 
-    console.log(response.data);
+    if (response.data.items.length > 0) {
+      // Filter results to find the best match
+      const bestMatch =
+        response.data.items.find(
+          (video) =>
+            video.snippet.title
+              .toLowerCase()
+              .includes(trackName.toLowerCase()) &&
+            video.snippet.title
+              .toLowerCase()
+              .includes(artistName.toLowerCase()),
+        ) || response.data.items[0];
 
-    if (response.data.results.length > 0) {
-      const track = response.data.results[0];
       return {
-        audioUrl: track.audio,
-        streamUrl: track.audiodownload,
+        videoId: bestMatch.id.videoId,
+        title: bestMatch.snippet.title,
+        thumbnailUrl: bestMatch.snippet.thumbnails.default.url,
       };
     } else {
-      console.log("No track found");
+      console.log("No video found");
       return null;
     }
   } catch (error) {
-    console.error("Error fetching Jamendo track:", error);
+    console.error("Error fetching YouTube video:", error);
     throw error;
   }
 };

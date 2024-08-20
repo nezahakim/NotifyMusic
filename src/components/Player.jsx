@@ -1,4 +1,5 @@
 // Player.js
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,7 +19,7 @@ import {
 import {
   getSpotifyAccessToken,
   fetchSpotifyPlaylist,
-  fetchJamendoTrack,
+  fetchYouTubeVideo,
   fetchLyrics,
 } from "./api";
 import {
@@ -29,6 +30,7 @@ import {
 import SpotifyWebApi from "spotify-web-api-js";
 
 const spotifyApi = new SpotifyWebApi();
+
 const formatTime = (time) => {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
@@ -50,10 +52,12 @@ const Player = () => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [duration, setDuration] = useState(0);
   const [lyrics, setLyrics] = useState("");
-
-  const audioRef = useRef(null);
   const [isAudioOperationInProgress, setIsAudioOperationInProgress] =
     useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const playerRef = useRef(null);
+  const currentVideoIdRef = useRef(null);
 
   const fetchQueue = useCallback(async () => {
     try {
@@ -65,28 +69,22 @@ const Player = () => {
     }
   }, []);
 
-  const togglePlay = useCallback(() => {
-    if (audioRef.current && !isAudioOperationInProgress) {
-      setIsAudioOperationInProgress(true);
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-        setIsAudioOperationInProgress(false);
+  const loadAndPlayVideo = useCallback(async (track) => {
+    setIsLoading(true);
+    const youtubeVideo = await fetchYouTubeVideo(track.title, track.artist);
+    if (youtubeVideo && youtubeVideo.videoId !== currentVideoIdRef.current) {
+      currentVideoIdRef.current = youtubeVideo.videoId;
+      const updatedTrack = { ...track, ...youtubeVideo };
+      setCurrentTrack(updatedTrack);
+      if (playerRef.current) {
+        playerRef.current.loadVideoById(youtubeVideo.videoId);
+        setIsPlaying(true);
       } else {
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((error) => {
-            console.error("Error playing audio:", error);
-          })
-          .finally(() => {
-            setIsAudioOperationInProgress(false);
-          });
+        loadVideo(youtubeVideo.videoId);
       }
     }
-  }, [isPlaying, isAudioOperationInProgress]);
+    setIsLoading(false);
+  }, []);
 
   const handleNextTrack = useCallback(() => {
     if (
@@ -94,53 +92,65 @@ const Player = () => {
       !isAudioOperationInProgress
     ) {
       setIsAudioOperationInProgress(true);
-      setCurrentTrackIndex((prevIndex) => prevIndex + 1);
-      setCurrentTrack(playlist[currentTrackIndex + 1]);
-      setIsPlaying(true);
+      const nextIndex = currentTrackIndex + 1;
+      setCurrentTrackIndex(nextIndex);
+      loadAndPlayVideo(playlist[nextIndex]);
       setIsAudioOperationInProgress(false);
     }
-  }, [currentTrackIndex, playlist, isAudioOperationInProgress]);
+  }, [
+    currentTrackIndex,
+    playlist,
+    isAudioOperationInProgress,
+    loadAndPlayVideo,
+  ]);
 
   const handlePreviousTrack = useCallback(() => {
     if (currentTrackIndex > 0 && !isAudioOperationInProgress) {
       setIsAudioOperationInProgress(true);
-      setCurrentTrackIndex((prevIndex) => prevIndex - 1);
-      setCurrentTrack(playlist[currentTrackIndex - 1]);
-      setIsPlaying(true);
+      const prevIndex = currentTrackIndex - 1;
+      setCurrentTrackIndex(prevIndex);
+      loadAndPlayVideo(playlist[prevIndex]);
       setIsAudioOperationInProgress(false);
     }
-  }, [currentTrackIndex, playlist, isAudioOperationInProgress]);
-
-  const fetchCurrentTrack = useCallback(async () => {
-    if (playlist.length > 0) {
-      const track = playlist[currentTrackIndex];
-      setCurrentTrack(track);
-      const jamendoTrack = await fetchJamendoTrack(track.title, track.artist);
-      if (jamendoTrack) {
-        const updatedTrack = { ...track, ...jamendoTrack };
-        setCurrentTrack(updatedTrack);
-        // Cache the current track
-        cacheTrack(updatedTrack);
-
-        // Prefetch next tracks
-        prefetchNextTracks(playlist, currentTrackIndex);
-      } else {
-        console.log("Jamendo track not found");
-      }
-    }
-  }, [playlist, currentTrackIndex]);
+  }, [
+    currentTrackIndex,
+    playlist,
+    isAudioOperationInProgress,
+    loadAndPlayVideo,
+  ]);
 
   const playTrackFromQueue = useCallback(
     (index) => {
       const newIndex = currentTrackIndex + index + 1;
       if (newIndex < playlist.length) {
         setCurrentTrackIndex(newIndex);
-        setCurrentTrack(playlist[newIndex]);
-        setIsPlaying(true);
+        loadAndPlayVideo(playlist[newIndex]);
       }
     },
-    [currentTrackIndex, playlist],
+    [currentTrackIndex, playlist, loadAndPlayVideo],
   );
+
+  const togglePlay = useCallback(() => {
+    if (playerRef.current && !isAudioOperationInProgress) {
+      setIsAudioOperationInProgress(true);
+      if (isPlaying) {
+        playerRef.current.pauseVideo();
+        setIsPlaying(false);
+      } else {
+        playerRef.current.playVideo();
+        setIsPlaying(true);
+      }
+      setIsAudioOperationInProgress(false);
+    }
+  }, [isPlaying, isAudioOperationInProgress]);
+
+  const fetchCurrentTrack = useCallback(async () => {
+    if (playlist.length > 0) {
+      const track = playlist[currentTrackIndex];
+      setCurrentTrack(track);
+      await loadAndPlayVideo(track);
+    }
+  }, [playlist, currentTrackIndex, loadAndPlayVideo]);
 
   useEffect(() => {
     const initializePlayer = async () => {
@@ -148,7 +158,6 @@ const Player = () => {
       spotifyApi.setAccessToken(accessToken);
       await fetchQueue();
     };
-
     initializePlayer();
   }, [fetchQueue]);
 
@@ -158,61 +167,68 @@ const Player = () => {
     }
   }, [currentTrack, fetchCurrentTrack]);
 
-  useEffect(() => {
-    if (audioRef.current && currentTrack && currentTrack.audioUrl) {
-      const loadAudio = async () => {
-        const cachedTrack = await getCachedTrack(currentTrack.audioUrl);
-        if (cachedTrack) {
-          const objectUrl = URL.createObjectURL(cachedTrack);
-          audioRef.current.src = objectUrl;
-        } else {
-          audioRef.current.src = currentTrack.audioUrl;
-        }
-        audioRef.current.load();
-      };
-      loadAudio();
+  const loadVideo = (videoId) => {
+    if (window.YT) {
+      new window.YT.Player("youtube-player", {
+        height: "0",
+        width: "0",
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+        },
+        events: {
+          onReady: (event) => {
+            playerRef.current = event.target;
+            setIsPlaying(true);
+            setIsLoading(false);
+          },
+          onStateChange: (event) => {
+            if (event.data === window.YT.PlayerState.ENDED) {
+              handleNextTrack();
+            }
+          },
+        },
+      });
+    } else {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      window.onYouTubeIframeAPIReady = () => loadVideo(videoId);
     }
-  }, [currentTrack]);
+  };
 
   useEffect(() => {
-    if (audioRef.current && !isAudioOperationInProgress) {
-      setIsAudioOperationInProgress(true);
-      if (isPlaying) {
-        audioRef.current
-          .play()
-          .catch((error) => {
-            console.error("Error in play effect:", error);
-            setIsPlaying(false);
-          })
-          .finally(() => {
-            setIsAudioOperationInProgress(false);
-          });
-      } else {
-        audioRef.current.pause();
-        setIsAudioOperationInProgress(false);
-      }
+    if (
+      currentTrack &&
+      currentTrack.videoId &&
+      currentTrack.videoId !== currentVideoIdRef.current
+    ) {
+      loadAndPlayVideo(currentTrack);
     }
-  }, [isPlaying]);
+  }, [currentTrack, loadAndPlayVideo]);
 
   const handleTimeUpdate = useCallback(() => {
-    if (audioRef.current) {
-      const newProgress =
-        (audioRef.current.currentTime / audioRef.current.duration) * 100;
+    if (playerRef.current) {
+      const currentTime = playerRef.current.getCurrentTime();
+      const duration = playerRef.current.getDuration();
+      const newProgress = (currentTime / duration) * 100;
       setProgress(isNaN(newProgress) ? 0 : newProgress);
+      setDuration(duration);
     }
   }, []);
 
-  const handleLoadedMetadata = useCallback(() => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  }, []);
+  useEffect(() => {
+    const interval = setInterval(handleTimeUpdate, 1000);
+    return () => clearInterval(interval);
+  }, [handleTimeUpdate]);
 
   const handleVolumeChange = useCallback((e) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
+    if (playerRef.current) {
+      playerRef.current.setVolume(newVolume * 100);
     }
   }, []);
 
@@ -243,14 +259,14 @@ const Player = () => {
     (e) => {
       const newProgress = parseFloat(e.target.value);
       if (
-        audioRef.current &&
+        playerRef.current &&
         !isNaN(duration) &&
         duration > 0 &&
         !isAudioOperationInProgress
       ) {
         setIsAudioOperationInProgress(true);
         const newTime = (newProgress / 100) * duration;
-        audioRef.current.currentTime = newTime;
+        playerRef.current.seekTo(newTime);
         setProgress(newProgress);
         setIsAudioOperationInProgress(false);
       }
@@ -263,10 +279,8 @@ const Player = () => {
   }, []);
 
   const handleProgressMouseUp = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.error("Error playing audio:", error);
-      });
+    if (playerRef.current) {
+      playerRef.current.playVideo();
       setIsPlaying(true);
     }
   }, []);
@@ -297,26 +311,26 @@ const Player = () => {
       className={`fixed bottom-0 left-0 right-0 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg text-white p-4 ${
         isExpanded ? "h-screen" : ""
       }`}
-      animate={{ height: isExpanded ? "100vh" : "auto" }}
+      animate={{ height: isExpanded ? "100vh" : "52vh" }}
       transition={{ duration: 0.3 }}
     >
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto max-w-6xl ">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4">
+          <div
+            className={`${isExpanded ? " " : "flex"} items-center space-x-4`}
+          >
             <img
               src={currentTrack.albumCover}
               alt="Album Cover"
-              className={`rounded-lg shadow-lg ${isExpanded ? "w-32 h-32" : "w-16 h-16"}`}
+              className={`rounded-lg shadow-lg ${isExpanded ? "w-0 h-0" : "w-32 h-32"}`}
             />
-            <div>
+            <div className={` ${isExpanded ? "w-0 h-0" : ""} `}>
               <h3
-                className={`font-bold ${isExpanded ? "text-2xl" : "text-lg"}`}
+                className={`font-bold ${isExpanded ? "text-0xl" : "text-2xl"}`}
               >
                 {currentTrack.title}
               </h3>
-              <p
-                className={`${isExpanded ? "text-base" : "text-sm"} text-gray-300`}
-              >
+              <p className={`${isExpanded ? "" : "text-base"} text-gray-300`}>
                 {currentTrack.artist}
               </p>
               {isExpanded && (
@@ -336,7 +350,7 @@ const Player = () => {
           </button>
         </div>
 
-        {isExpanded && (
+        {!isExpanded && (
           <div className="mb-8">
             <div className="flex justify-center space-x-8 mb-6">
               <button
@@ -376,7 +390,7 @@ const Player = () => {
             </div>
             <div className="flex items-center space-x-4 mb-6">
               <span className="text-sm text-gray-400">
-                {formatTime(audioRef.current?.currentTime || 0)}
+                {formatTime(playerRef.current?.getCurrentTime() || 0)}
               </span>
               <input
                 type="range"
@@ -391,7 +405,7 @@ const Player = () => {
                 className="flex-grow h-2 bg-gray-700 rounded-full overflow-hidden appearance-none"
               />
               <span className="text-sm text-gray-400">
-                {formatTime(audioRef.current?.duration || 0)}
+                {formatTime(playerRef.current?.getDuration() || 0)}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -424,42 +438,115 @@ const Player = () => {
             </div>
           </div>
         )}
-
-        {!isExpanded && (
-          <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={progress}
-              onChange={handleProgressChange}
-              className="flex-grow h-1 bg-gray-700 rounded-full overflow-hidden appearance-none"
-            />
-            <div className="flex items-center space-x-4">
+        {isExpanded && (
+          <>
+            <div className="flex justify-end mb-4">
               <button
-                onClick={() => (audioRef.current.currentTime -= 10)}
+                onClick={toggleExpand}
                 className="text-gray-400 hover:text-white"
               >
-                <BackwardIcon className="h-5 w-5" />
-              </button>
-              <button
-                onClick={togglePlay}
-                className="bg-white text-black rounded-full p-2 hover:bg-gray-200 transition-colors"
-              >
-                {isPlaying ? (
-                  <PauseIcon className="h-5 w-5" />
-                ) : (
-                  <PlayIcon className="h-5 w-5" />
-                )}
-              </button>
-              <button
-                onClick={() => (audioRef.current.currentTime += 10)}
-                className="text-gray-400 hover:text-white"
-              >
-                <ForwardIcon className="h-5 w-5" />
+                <ChevronDownIcon className="h-6 w-6" />
               </button>
             </div>
-          </div>
+            <div className="flex-grow flex flex-col items-center justify-center space-y-8">
+              <img
+                src={currentTrack.albumCover}
+                alt="Album Cover"
+                className="w-64 h-64 rounded-lg shadow-lg"
+              />
+              <div className="text-center">
+                <h3 className="text-3xl font-bold">{currentTrack.title}</h3>
+                <p className="text-xl text-gray-300">{currentTrack.artist}</p>
+                <p className="text-sm text-gray-400">{currentTrack.album}</p>
+              </div>
+            </div>
+            <div className="mb-8">
+              <div className="flex items-center space-x-4 mb-6">
+                <span className="text-sm text-gray-400">
+                  {formatTime(playerRef.current?.getCurrentTime() || 0)}
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={isNaN(progress) ? 0 : progress}
+                  onChange={handleProgressChange}
+                  onMouseDown={handleProgressMouseDown}
+                  onMouseUp={handleProgressMouseUp}
+                  onTouchStart={handleProgressMouseDown}
+                  onTouchEnd={handleProgressMouseUp}
+                  className="flex-grow h-2 bg-gray-700 rounded-full overflow-hidden appearance-none"
+                />
+                <span className="text-sm text-gray-400">
+                  {formatTime(playerRef.current?.getDuration() || 0)}
+                </span>
+              </div>
+              <div className="flex justify-center space-x-8 mb-6">
+                <button
+                  onClick={toggleShuffle}
+                  className={`text-gray-400 hover:text-white ${isShuffled ? "text-green-500" : ""}`}
+                >
+                  <ArrowsRightLeftIcon className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={handlePreviousTrack}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <BackwardIcon className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={togglePlay}
+                  className="bg-white text-black rounded-full p-4 hover:bg-gray-200 transition-colors"
+                >
+                  {isPlaying ? (
+                    <PauseIcon className="h-8 w-8" />
+                  ) : (
+                    <PlayIcon className="h-8 w-8" />
+                  )}
+                </button>
+                <button
+                  onClick={handleNextTrack}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <ForwardIcon className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={toggleRepeat}
+                  className={`text-gray-400 hover:text-white ${repeatMode !== "off" ? "text-green-500" : ""}`}
+                >
+                  <ArrowPathRoundedSquareIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={handleLike}
+                    className="text-gray-400 hover:text-pink-500 transition-colors"
+                  >
+                    <HeartIcon className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <ShareIcon className="h-6 w-6" />
+                  </button>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-400">Volume</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={handleVolumeChange}
+                    className="w-24"
+                  />
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className="flex justify-center mt-4 space-x-8">
@@ -478,13 +565,11 @@ const Player = () => {
             <span>Queue</span>
           </button>
         </div>
-
         <AnimatePresence>
           {showLyrics && (
             <LyricsPanel lyrics={lyrics} onClose={() => setShowLyrics(false)} />
           )}
         </AnimatePresence>
-
         <AnimatePresence>
           {showQueue && (
             <QueuePanel
@@ -495,20 +580,7 @@ const Player = () => {
           )}
         </AnimatePresence>
       </div>
-      {currentTrack && (
-        <audio
-          ref={audioRef}
-          src={currentTrack?.audioUrl}
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
-          onCanPlay={() => setIsAudioOperationInProgress(false)}
-          onError={(e) => {
-            console.error("Audio error:", e);
-            setIsPlaying(false);
-            setIsAudioOperationInProgress(false);
-          }}
-        />
-      )}
+      <div id="youtube-player" style={{ display: "none" }}></div>
     </motion.div>
   );
 };

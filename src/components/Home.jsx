@@ -53,9 +53,9 @@ const Home = () => {
 
   return (
     <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen text-white p-8">
-      <h1 className="text-4xl font-bold mb-8">Welcome to Your Music</h1>
+      <h1 className="flex item-center-flex text-4xl font-bold mb-8">Music+</h1>
 
-      <section className="mb-16">
+      {/* <section className="mb-16">
         <h2 className="text-2xl font-semibold mb-6">Trending Now</h2>
         <div className="grid grid-cols-4 gap-6">
           <FeaturedCard
@@ -85,7 +85,7 @@ const Home = () => {
           />
         </div>
       </section>
-
+ */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold mb-4">Featured Playlists</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

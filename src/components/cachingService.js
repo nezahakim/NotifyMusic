@@ -1,25 +1,30 @@
 // cachingService.js
-const CACHE_NAME = "music-player-cache-v1";
+import { fetchYouTubeVideo } from "./api";
+
+const CACHE_NAME = "music-player-cache";
 
 export const cacheTrack = async (track) => {
   const cache = await caches.open(CACHE_NAME);
-  const response = await fetch(track.audioUrl);
-  await cache.put(track.audioUrl, response);
+  await cache.put(`track-${track.id}`, new Response(JSON.stringify(track)));
 };
 
-export const getCachedTrack = async (audioUrl) => {
+export const getCachedTrack = async (trackId) => {
   const cache = await caches.open(CACHE_NAME);
-  const response = await cache.match(audioUrl);
-  return response ? response.blob() : null;
+  const response = await cache.match(`track-${trackId}`);
+  if (response) {
+    return response.json();
+  }
+  return null;
 };
 
-export const prefetchNextTracks = async (tracks, currentIndex) => {
-  const nextTracks = tracks.slice(currentIndex + 1, currentIndex + 4);
+export const prefetchNextTracks = async (playlist, currentIndex) => {
+  const nextTracks = playlist.slice(currentIndex + 1, currentIndex + 4);
   for (const track of nextTracks) {
-    if (track.audioUrl) {
-      const cachedTrack = await getCachedTrack(track.audioUrl);
-      if (!cachedTrack) {
-        cacheTrack(track);
+    const cachedTrack = await getCachedTrack(track.id);
+    if (!cachedTrack) {
+      const youtubeVideo = await fetchYouTubeVideo(track.title, track.artist);
+      if (youtubeVideo) {
+        await cacheTrack({ ...track, ...youtubeVideo });
       }
     }
   }
