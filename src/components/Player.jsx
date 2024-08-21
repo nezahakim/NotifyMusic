@@ -38,7 +38,7 @@ const formatTime = (time) => {
   const seconds = Math.floor(time % 60);
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
-  
+
 const Player = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
@@ -397,7 +397,7 @@ const Player = () => {
       className={`fixed bottom-0 left-0 right-0 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg text-white p-4 ${
         isExpanded ? "h-screen" : ""
       }`}
-      animate={{ height: isExpanded ? "100vh" : "40vh" }}
+      animate={{ height: isExpanded ? "100vh" : "auto" }}
       transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto max-w-6xl h-full flex flex-col">
