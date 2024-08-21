@@ -22,11 +22,13 @@ import {
   fetchYouTubeVideo,
   fetchLyrics,
 } from "./api";
+
 import {
   cacheTrack,
   getCachedTrack,
   prefetchNextTracks,
 } from "./cachingService";
+
 import SpotifyWebApi from "spotify-web-api-js";
 
 const spotifyApi = new SpotifyWebApi();
@@ -36,7 +38,7 @@ const formatTime = (time) => {
   const seconds = Math.floor(time % 60);
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
-
+  
 const Player = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
@@ -55,36 +57,87 @@ const Player = () => {
   const [isAudioOperationInProgress, setIsAudioOperationInProgress] =
     useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [autoNext, setAutoNext] = useState(false);
 
   const playerRef = useRef(null);
   const currentVideoIdRef = useRef(null);
 
   const fetchQueue = useCallback(async () => {
     try {
-      const tracks = await fetchSpotifyPlaylist("37i9dQZEVXbMDoHDwVN2tF"); // Example playlist ID (Global Top 50)
+      const tracks = await fetchSpotifyPlaylist("37i9dQZEVXbMDoHDwVN2tF");
       setPlaylist(tracks);
-      setQueue(tracks.slice(1, 11)); // Set the next 10 tracks as the queue
+      setQueue(tracks.slice(1, 11));
     } catch (error) {
       console.error("Error fetching queue:", error);
     }
   }, []);
 
+  // const loadAndPlayVideo = useCallback(async (track) => {
+  //   setIsLoading(true);
+  //   const youtubeVideo = await fetchYouTubeVideo(track.title, track.artist);
+  //   if (youtubeVideo && youtubeVideo.videoId !== currentVideoIdRef.current) {
+  //     currentVideoIdRef.current = youtubeVideo.videoId;
+  //     const updatedTrack = { ...track, ...youtubeVideo };
+  //     setCurrentTrack(updatedTrack);
+  //     if (playerRef.current) {
+  //       playerRef.current.loadVideoById(youtubeVideo.videoId);
+  //       setIsPlaying(true);
+  //     } else {
+  //       loadVideo(youtubeVideo.videoId);
+  //     }
+  //   }
+  //   setIsLoading(false);
+  // }, []);
+
   const loadAndPlayVideo = useCallback(async (track) => {
     setIsLoading(true);
-    const youtubeVideo = await fetchYouTubeVideo(track.title, track.artist);
-    if (youtubeVideo && youtubeVideo.videoId !== currentVideoIdRef.current) {
-      currentVideoIdRef.current = youtubeVideo.videoId;
-      const updatedTrack = { ...track, ...youtubeVideo };
-      setCurrentTrack(updatedTrack);
+
+    // Check if the track is already cached
+    let cachedTrack = await getCachedTrack(track.id);
+
+    if (!cachedTrack) {
+      const youtubeVideo = await fetchYouTubeVideo(track.title, track.artist);
+      cachedTrack = { ...track, ...youtubeVideo };
+      await cacheTrack(cachedTrack);
+    }
+
+    if (cachedTrack.videoId !== currentVideoIdRef.current) {
+      currentVideoIdRef.current = cachedTrack.videoId;
+      setCurrentTrack(cachedTrack);
+
       if (playerRef.current) {
-        playerRef.current.loadVideoById(youtubeVideo.videoId);
+        playerRef.current.loadVideoById(cachedTrack.videoId);
         setIsPlaying(true);
       } else {
-        loadVideo(youtubeVideo.videoId);
+        loadVideo(cachedTrack.videoId);
       }
     }
+
     setIsLoading(false);
   }, []);
+
+  // Prefetch next tracks when the queue changes
+  useEffect(() => {
+    prefetchNextTracks(queue);
+  }, [queue]);
+
+  // const handleNextTrack = useCallback(() => {
+  //   if (
+  //     currentTrackIndex < playlist.length - 1 &&
+  //     !isAudioOperationInProgress
+  //   ) {
+  //     setIsAudioOperationInProgress(true);
+  //     const nextIndex = currentTrackIndex + 1;
+  //     setCurrentTrackIndex(nextIndex);
+  //     loadAndPlayVideo(playlist[nextIndex]);
+  //     setIsAudioOperationInProgress(false);
+  //   }
+  // }, [
+  //   currentTrackIndex,
+  //   playlist,
+  //   isAudioOperationInProgress,
+  //   loadAndPlayVideo,
+  // ]);
 
   const handleNextTrack = useCallback(() => {
     if (
@@ -96,12 +149,20 @@ const Player = () => {
       setCurrentTrackIndex(nextIndex);
       loadAndPlayVideo(playlist[nextIndex]);
       setIsAudioOperationInProgress(false);
+    } else if (currentTrackIndex === playlist.length - 1 && autoNext) {
+      // If it's the last track and auto-next is on, start from the beginning
+      setCurrentTrackIndex(0);
+      loadAndPlayVideo(playlist[0]);
+    } else {
+      // If it's the last track and auto-next is off, stop playing
+      setIsPlaying(false);
     }
   }, [
     currentTrackIndex,
     playlist,
     isAudioOperationInProgress,
     loadAndPlayVideo,
+    autoNext,
   ]);
 
   const handlePreviousTrack = useCallback(() => {
@@ -185,7 +246,11 @@ const Player = () => {
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.ENDED) {
-              handleNextTrack();
+              if (autoNext) {
+                handleNextTrack();
+              } else {
+                setIsPlaying(false);
+              }
             }
           },
         },
@@ -198,6 +263,10 @@ const Player = () => {
       window.onYouTubeIframeAPIReady = () => loadVideo(videoId);
     }
   };
+
+  const toggleAutoNext = useCallback(() => {
+    setAutoNext((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     if (
@@ -302,6 +371,23 @@ const Player = () => {
     setShowLyrics(false);
   }, []);
 
+  const [showNotification, setShowNotification] = useState(false);
+
+  if (currentTrackIndex === playlist.length - 1 && autoNext) {
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+    setCurrentTrackIndex(0);
+    loadAndPlayVideo(playlist[0]);
+  }
+
+  {
+    showNotification && (
+      <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+        Playlist restarted
+      </div>
+    );
+  }
+
   if (!currentTrack) {
     return <div>Loading...</div>;
   }
@@ -311,7 +397,7 @@ const Player = () => {
       className={`fixed bottom-0 left-0 right-0 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg text-white p-4 ${
         isExpanded ? "h-screen" : ""
       }`}
-      animate={{ height: isExpanded ? "100vh" : "auto" }}
+      animate={{ height: isExpanded ? "100vh" : "40vh" }}
       transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto max-w-6xl h-full flex flex-col">
@@ -485,8 +571,29 @@ const Player = () => {
                 >
                   <ArrowPathRoundedSquareIcon className="h-6 w-6" />
                 </button>
+                {/* <button
+                  onClick={toggleAutoNext}
+                  className={`text-gray-400 hover:text-white ${
+                    autoNext ? "text-green-500" : ""
+                  }`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                    />
+                  </svg>
+                </button> */}
               </div>
-              <div className="flex items-center space-x-4 mb-6">
+              {/* <div className="flex items-center space-x-4 mb-6">
                 <span className="text-sm text-gray-400">
                   {formatTime(playerRef.current?.getCurrentTime() || 0)}
                 </span>
@@ -533,12 +640,12 @@ const Player = () => {
                     className="w-24"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           </>
         )}
 
-        <div className="flex justify-center mt-4 space-x-8">
+        {/* <div className="flex justify-center mt-4 space-x-8">
           <button
             onClick={handleShowLyrics}
             className="text-sm flex items-center space-x-1 hover:text-pink-400 transition-colors"
@@ -554,7 +661,7 @@ const Player = () => {
             <span>Queue</span>
           </button>
         </div>
-
+ */}
         <AnimatePresence>
           {showLyrics && (
             <LyricsPanel lyrics={lyrics} onClose={() => setShowLyrics(false)} />
