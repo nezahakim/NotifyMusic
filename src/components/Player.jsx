@@ -311,134 +311,12 @@ const Player = () => {
       className={`fixed bottom-0 left-0 right-0 bg-black bg-opacity-90 backdrop-filter backdrop-blur-lg text-white p-4 ${
         isExpanded ? "h-screen" : ""
       }`}
-      animate={{ height: isExpanded ? "100vh" : "52vh" }}
+      animate={{ height: isExpanded ? "100vh" : "auto" }}
       transition={{ duration: 0.3 }}
     >
-      <div className="container mx-auto max-w-6xl ">
-        <div className="flex items-center justify-between mb-4">
-          <div
-            className={`${isExpanded ? " " : "flex"} items-center space-x-4`}
-          >
-            <img
-              src={currentTrack.albumCover}
-              alt="Album Cover"
-              className={`rounded-lg shadow-lg ${isExpanded ? "w-0 h-0" : "w-32 h-32"}`}
-            />
-            <div className={` ${isExpanded ? "w-0 h-0" : ""} `}>
-              <h3
-                className={`font-bold ${isExpanded ? "text-0xl" : "text-2xl"}`}
-              >
-                {currentTrack.title}
-              </h3>
-              <p className={`${isExpanded ? "" : "text-base"} text-gray-300`}>
-                {currentTrack.artist}
-              </p>
-              {isExpanded && (
-                <p className="text-sm text-gray-400">{currentTrack.album}</p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={toggleExpand}
-            className="text-gray-400 hover:text-white"
-          >
-            {isExpanded ? (
-              <ChevronDownIcon className="h-6 w-6" />
-            ) : (
-              <ChevronUpIcon className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-
-        {!isExpanded && (
-          <div className="mb-8">
-            <div className="flex justify-center space-x-8 mb-6">
-              <button
-                onClick={toggleShuffle}
-                className={`text-gray-400 hover:text-white ${isShuffled ? "text-green-500" : ""}`}
-              >
-                <ArrowsRightLeftIcon className="h-6 w-6" />
-              </button>
-              <button
-                onClick={handlePreviousTrack}
-                className="text-gray-400 hover:text-white"
-              >
-                <BackwardIcon className="h-6 w-6" />
-              </button>
-              <button
-                onClick={togglePlay}
-                className="bg-white text-black rounded-full p-4 hover:bg-gray-200 transition-colors"
-              >
-                {isPlaying ? (
-                  <PauseIcon className="h-8 w-8" />
-                ) : (
-                  <PlayIcon className="h-8 w-8" />
-                )}
-              </button>
-              <button
-                onClick={handleNextTrack}
-                className="text-gray-400 hover:text-white"
-              >
-                <ForwardIcon className="h-6 w-6" />
-              </button>
-              <button
-                onClick={toggleRepeat}
-                className={`text-gray-400 hover:text-white ${repeatMode !== "off" ? "text-green-500" : ""}`}
-              >
-                <ArrowPathRoundedSquareIcon className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="flex items-center space-x-4 mb-6">
-              <span className="text-sm text-gray-400">
-                {formatTime(playerRef.current?.getCurrentTime() || 0)}
-              </span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={isNaN(progress) ? 0 : progress}
-                onChange={handleProgressChange}
-                onMouseDown={handleProgressMouseDown}
-                onMouseUp={handleProgressMouseUp}
-                onTouchStart={handleProgressMouseDown}
-                onTouchEnd={handleProgressMouseUp}
-                className="flex-grow h-2 bg-gray-700 rounded-full overflow-hidden appearance-none"
-              />
-              <span className="text-sm text-gray-400">
-                {formatTime(playerRef.current?.getDuration() || 0)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={handleLike}
-                  className="text-gray-400 hover:text-pink-500 transition-colors"
-                >
-                  <HeartIcon className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="text-gray-400 hover:text-blue-500 transition-colors"
-                >
-                  <ShareIcon className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-400">Volume</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  onChange={handleVolumeChange}
-                  className="w-24"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-        {isExpanded && (
+      <div className="container mx-auto max-w-6xl h-full flex flex-col">
+        {isExpanded ? (
+          // Expanded view
           <>
             <div className="flex justify-end mb-4">
               <button
@@ -547,6 +425,117 @@ const Player = () => {
               </div>
             </div>
           </>
+        ) : (
+          // Minimized view
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <img
+                  src={currentTrack.albumCover}
+                  alt="Album Cover"
+                  className="rounded-lg shadow-lg w-32 h-32"
+                />
+                <div>
+                  <h3 className="font-bold text-2xl">{currentTrack.title}</h3>
+                  <p className="text-base text-gray-300">
+                    {currentTrack.artist}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={toggleExpand}
+                className="text-gray-400 hover:text-white"
+              >
+                <ChevronUpIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="mb-8">
+              <div className="flex justify-center space-x-8 mb-6">
+                <button
+                  onClick={toggleShuffle}
+                  className={`text-gray-400 hover:text-white ${isShuffled ? "text-green-500" : ""}`}
+                >
+                  <ArrowsRightLeftIcon className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={handlePreviousTrack}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <BackwardIcon className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={togglePlay}
+                  className="bg-white text-black rounded-full p-4 hover:bg-gray-200 transition-colors"
+                >
+                  {isPlaying ? (
+                    <PauseIcon className="h-8 w-8" />
+                  ) : (
+                    <PlayIcon className="h-8 w-8" />
+                  )}
+                </button>
+                <button
+                  onClick={handleNextTrack}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <ForwardIcon className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={toggleRepeat}
+                  className={`text-gray-400 hover:text-white ${repeatMode !== "off" ? "text-green-500" : ""}`}
+                >
+                  <ArrowPathRoundedSquareIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="flex items-center space-x-4 mb-6">
+                <span className="text-sm text-gray-400">
+                  {formatTime(playerRef.current?.getCurrentTime() || 0)}
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={isNaN(progress) ? 0 : progress}
+                  onChange={handleProgressChange}
+                  onMouseDown={handleProgressMouseDown}
+                  onMouseUp={handleProgressMouseUp}
+                  onTouchStart={handleProgressMouseDown}
+                  onTouchEnd={handleProgressMouseUp}
+                  className="flex-grow h-2 bg-gray-700 rounded-full overflow-hidden appearance-none"
+                />
+                <span className="text-sm text-gray-400">
+                  {formatTime(playerRef.current?.getDuration() || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={handleLike}
+                    className="text-gray-400 hover:text-pink-500 transition-colors"
+                  >
+                    <HeartIcon className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <ShareIcon className="h-6 w-6" />
+                  </button>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-400">Volume</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={handleVolumeChange}
+                    className="w-24"
+                  />
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className="flex justify-center mt-4 space-x-8">
@@ -565,6 +554,7 @@ const Player = () => {
             <span>Queue</span>
           </button>
         </div>
+
         <AnimatePresence>
           {showLyrics && (
             <LyricsPanel lyrics={lyrics} onClose={() => setShowLyrics(false)} />
