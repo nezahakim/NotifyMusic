@@ -140,29 +140,25 @@ const Player = () => {
   // ]);
 
   const handleNextTrack = useCallback(() => {
-    if (
-      currentTrackIndex < playlist.length - 1 &&
-      !isAudioOperationInProgress
-    ) {
+    if (!isAudioOperationInProgress) {
       setIsAudioOperationInProgress(true);
-      const nextIndex = currentTrackIndex + 1;
+      let nextIndex = currentTrackIndex + 1;
+
+      if (nextIndex >= playlist.length) {
+        nextIndex = 0; // Loop back to the beginning
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000); // Hide after 3 seconds
+      }
+
       setCurrentTrackIndex(nextIndex);
       loadAndPlayVideo(playlist[nextIndex]);
       setIsAudioOperationInProgress(false);
-    } else if (currentTrackIndex === playlist.length - 1 && autoNext) {
-      // If it's the last track and auto-next is on, start from the beginning
-      setCurrentTrackIndex(0);
-      loadAndPlayVideo(playlist[0]);
-    } else {
-      // If it's the last track and auto-next is off, stop playing
-      setIsPlaying(false);
     }
   }, [
     currentTrackIndex,
     playlist,
     isAudioOperationInProgress,
     loadAndPlayVideo,
-    autoNext,
   ]);
 
   const handlePreviousTrack = useCallback(() => {
@@ -246,11 +242,7 @@ const Player = () => {
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.ENDED) {
-              if (autoNext) {
-                handleNextTrack();
-              } else {
-                setIsPlaying(false);
-              }
+              handleNextTrack();
             }
           },
         },
@@ -263,10 +255,6 @@ const Player = () => {
       window.onYouTubeIframeAPIReady = () => loadVideo(videoId);
     }
   };
-
-  const toggleAutoNext = useCallback(() => {
-    setAutoNext((prev) => !prev);
-  }, []);
 
   useEffect(() => {
     if (
@@ -371,15 +359,30 @@ const Player = () => {
     setShowLyrics(false);
   }, []);
 
+  const preloadNextTrack = useCallback(() => {
+    const nextIndex = (currentTrackIndex + 1) % playlist.length;
+    const nextTrack = playlist[nextIndex];
+    if (nextTrack) {
+      getCachedTrack(nextTrack.id).then(async (cachedTrack) => {
+        if (!cachedTrack) {
+          const youtubeVideo = await fetchYouTubeVideo(
+            nextTrack.title,
+            nextTrack.artist,
+          );
+          const updatedTrack = { ...nextTrack, ...youtubeVideo };
+          await cacheTrack(updatedTrack);
+        }
+      });
+    }
+  }, [currentTrackIndex, playlist]);
+
+  useEffect(() => {
+    if (currentTrack) {
+      preloadNextTrack();
+    }
+  }, [currentTrack, preloadNextTrack]);
+
   const [showNotification, setShowNotification] = useState(false);
-
-  if (currentTrackIndex === playlist.length - 1 && autoNext) {
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 3000);
-    setCurrentTrackIndex(0);
-    loadAndPlayVideo(playlist[0]);
-  }
-
   {
     showNotification && (
       <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
