@@ -5,7 +5,7 @@ interface AudioStreamOptions {
   roomId: string;
   serverUrl: string;
   onParticipantUpdate?: (count: number) => void;
-  onChatMessage?: (message: string) => void;
+  onChatMessage?: (msg:{user: string, message: string,avatar: string,isHost:boolean}) => void;
 }
 
 export function useAudioStream({

@@ -276,7 +276,7 @@ const Live = () => {
   const [participantCount, setParticipantCount] = useState(3);
   const [showChat, setShowChat] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [chatMessages, setChatMessages] = useState([
     { id: 1, user: "Alex", message: "That guitar riff was amazing! 🎸", avatar: "/cover.jpeg", isHost: false },
     { id: 2, user: "Sarah James", message: "Thanks! Taking requests now", avatar: "/cover.jpeg", isHost: true },
@@ -335,7 +335,9 @@ const Live = () => {
   },[])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const {
@@ -350,7 +352,7 @@ const Live = () => {
     onParticipantUpdate: (count) => {
       setParticipantCount(count);
     },
-    onChatMessage: (msg) => {
+    onChatMessage: (msg:{user: string, message: string,avatar: string,isHost: boolean }) => {
       setChatMessages(prev => [
         ...prev,
         {
@@ -358,7 +360,7 @@ const Live = () => {
           user: msg.user,
           message: msg.message,
           avatar: msg.avatar,
-          isHost: msg.isHost
+          isHost: msg?.isHost
         }
       ]);
       // Only increment unread count if message is not from current user
