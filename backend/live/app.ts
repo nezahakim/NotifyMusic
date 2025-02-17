@@ -1,8 +1,4 @@
-import { Elysia } from 'elysia';
 import { Server } from 'socket.io';
-
-// const app = new Elysia()
-// const server = app.listen(3001);
 
 const io = new Server(3001, {
   cors: {
@@ -94,7 +90,7 @@ io.on('connection', (socket) => {
 
   socket.on('get-live-participants', (roomId, callback)=>{
     // Send current participant count
-    if(roomId && roomId !== undefined){
+    if(roomId && activeRooms.has(roomId)){
       const participantCount = activeRooms.get(roomId).size;    
     if (callback) callback({ success: true, participants: participantCount });
     }
@@ -123,5 +119,3 @@ io.on('connection', (socket) => {
     }
   });
 });
-
-// console.log(`🦊 Elysia server with Socket.IO is running at ${app.server?.hostname}:${app.server?.port}`);

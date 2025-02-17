@@ -3,13 +3,11 @@ import axios from "axios";
 import { spawn } from "bun";
 import { existsSync, chmodSync } from "fs";
 import { cors } from '@elysiajs/cors'
-import { Console } from "console";
+import { Server } from 'socket.io';
 
 const app = new Elysia().use(cors());
 
 const YT_DLP_PATH = "./yt-dlp";
-
-// 🔥 Automatically download yt-dlp if not present
 const downloadYtDlp = async () => {
   if (!existsSync(YT_DLP_PATH)) {
     console.log("Downloading yt-dlp...");
@@ -22,7 +20,6 @@ const downloadYtDlp = async () => {
     console.log("yt-dlp downloaded!");
   }
 };
-
 
 app.get("/search", async ({ query }) => {
   if (!query.q) return { error: "Query is required" };
@@ -59,34 +56,6 @@ app.get("/search", async ({ query }) => {
   }
 });
 
-// 🎵 Stream YouTube Audio (Direct to User)
-// app.get("/stream", async ({ query, set }) => {
-//   await downloadYtDlp(); // Ensure yt-dlp is ready
-//   console.log(query.videoId)
-
-// try{
-//   if (!query.videoId) return { error: "Video ID is required" };
-//   const url = `https://www.youtube.com/watch?v=${query.videoId}`;
-
-//   // Bun.spawn to stream audio
-//   const process = spawn([YT_DLP_PATH, "-f", "bestaudio", "-o", "-", "--no-playlist", url], {
-//     stdout: "pipe",
-//     stderr: "ignore",
-//   });  
-
-//   set.headers["Content-Type"] = "audio/mpeg"; 
-//   set.status = 200;
-//   set.headers["Transfer-Encoding"] = "chunked";
-//   set.headers["Connection"] = "keep-alive";
-
-//   return process.stdout; // Stream output directly
-
-// } catch(error){
-//   console.log(query.videoId)
-//   console.log(error)
-// }
-// });
-
 app.get("/stream", async ({ query, set }) => {
   await downloadYtDlp();
   console.log(query.videoId)
@@ -116,64 +85,128 @@ app.get("/stream", async ({ query, set }) => {
 });
 
 
-const activeRooms = new Map()
+const activeRooms = new Map();
 
 function cleanAudio(audioData: Uint8Array): Uint8Array {
   return audioData;
 }
 
-app.ws('/audio-stream/:roomId', {
-  open(ws) {
-    const roomId = ws.data?.params?.roomId;
-    if (!roomId) return;
-    
-    // Create or join room
-    if (!activeRooms.has(roomId)) {
-      activeRooms.set(roomId, new Set());
-    }
-    
-    activeRooms.get(roomId).add(ws);
 
-    ws.send({user: `User joined: ${roomId}`});
-    console.log(`Client joined room: ${roomId}`);
+const io = new Server(3002, {
+  cors: {
+    origin: ["http://localhost:3000","http://127.0.0.1:3000"],
+    methods: ["GET", "POST"],
+    credentials: true
   },
+  transports: ['websocket', 'polling'] // Explicitly specify transports
+});
+
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
+  let currentRoom:any = null;
+
+  // Handle joining a room
+  socket.on('join-room', (roomId, callback) => {
+    try {
+      // Leave current room if any
+      if (currentRoom) {
+        socket.leave(currentRoom);
+        const room = activeRooms.get(currentRoom);
+        if (room) {
+          room.delete(socket.id);
+          if (room.size === 0) {
+            activeRooms.delete(currentRoom);
+            console.log(`Room cleaned up: ${currentRoom}`);
+          }
+        }
+      }
+
+      // Join new room
+      socket.join(roomId);
+      currentRoom = roomId;
+      
+      // Create room if it doesn't exist
+      if (!activeRooms.has(roomId)) {
+        activeRooms.set(roomId, new Set());
+      }
+      
+      activeRooms.get(roomId).add(socket.id);
+      console.log(`Client ${socket.id} joined room: ${roomId}`);
+      
+      // Send current participant count
+      const participantCount = activeRooms.get(roomId).size;
+      io.to(roomId).emit('info', { 
+        type: 'info',
+        participants: participantCount
+      });
+      
+      if (callback) callback({ success: true, participants: participantCount });
+    } catch (err:any) {
+      console.error("Error in join-room:", err);
+      if (callback) callback({ success: false, error: err.message });
+    }
+  });
   
-  message(ws, message) {
-    const roomId = ws.data?.params?.roomId;
-    if (!roomId) return;
+  // Handle audio data
+  socket.on('audio-data', (audioData) => {
+    if (!currentRoom) return;
     
-    const room = activeRooms.get(roomId);
-    if (!room) return;
-    
-    // Process audio data if it's a binary message
-    if (message instanceof Uint8Array) {
+    try {
       // Clean the audio
-      const cleanedAudio = cleanAudio(message);
+      const cleanedAudio = cleanAudio(audioData);
       
       // Broadcast to all clients in the room except sender
-      room.forEach((client: any) => {
-        if (client !== ws && client.readyState === 1) {
-          client.send(cleanedAudio);
-        }
-      });
+      socket.to(currentRoom).emit('audio-data', cleanedAudio);
+    } catch (err) {
+      console.error("Error in audio-data:", err);
     }
-  },
+  });
   
-  close(ws) {
-    const roomId = ws.data?.params?.roomId;
-    if (!roomId) return;
+  // Handle chat messages
+  socket.on('chat-message', (message) => {
+    if (!currentRoom) return;
     
-    const room = activeRooms.get(roomId);
-    if (room) {
-      room.delete(ws);
-      
-      // If room is empty, clean up
-      if (room.size === 0) {
-        activeRooms.delete(roomId);
-        console.log(`Room cleaned up: ${roomId}`);
+    try {
+      // Broadcast chat message to all clients in the room including sender
+      io.to(currentRoom).emit('chat-message', message);
+    } catch (err) {
+      console.error("Error in chat-message:", err);
+    }
+  });
+
+  socket.on('get-live-participants', (roomId, callback)=>{
+    // Send current participant count
+    if(roomId && activeRooms.has(roomId)){
+      const participantCount = activeRooms.get(roomId).size;    
+    if (callback) callback({ success: true, participants: participantCount });
+    }
+  })
+  
+  // Handle disconnection
+  socket.on('disconnect', (reason) => {
+    console.log(`Client ${socket.id} disconnected:`, reason);
+    if (currentRoom) {
+      const room = activeRooms.get(currentRoom);
+      if (room) {
+        room.delete(socket.id);
+        
+        // If room is empty, clean up
+        if (room.size === 0) {
+          activeRooms.delete(currentRoom);
+          console.log(`Room cleaned up: ${currentRoom}`);
+        } else {
+          // Send updated participant count
+          io.to(currentRoom).emit('info', { 
+            type: 'info',
+            participants: room.size
+          });
+        }
       }
     }
-  },
-})
+  });
+});
 
-app.listen(3001, () => console.log("Server running on port 3001"));
+
+app.listen(3001, () => {
+  console.log(`🚀 Backend running on http://localhost:3001`);
+});
