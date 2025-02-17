@@ -2,14 +2,9 @@ import { useEffect, useState } from 'react';
 import { Filter, Heart } from "@/utils/icons";
 import Image from "next/image";
 import { useAudioPlayer } from '@/context/AudioContext';
+import { Track } from '@/lib/types';
 
-interface Track {
-  id: number;
-  title: string;
-  artist: string;
-  thumbnail: string;
-  isLiked: boolean;
-}
+
 
 const PlayList = ({onClose}: {onClose: ()=> void}) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -26,12 +21,6 @@ const PlayList = ({onClose}: {onClose: ()=> void}) => {
       setIsVisible(false);
       onClose()
     }
-  };
-
-  const toggleLike = (trackId: number) => {
-    setTracks(tracks.map(track => 
-      track.id === trackId ? { ...track, isLiked: !track.isLiked } : track
-    ));
   };
 
   return (
@@ -72,16 +61,6 @@ const PlayList = ({onClose}: {onClose: ()=> void}) => {
                 <p className="text-lg font-medium truncate">{track.title}</p>
                 <p className="text-sm text-gray-500 truncate">{track.artist}</p>
               </div>
-              <button
-                onClick={() => toggleLike(track.id)}
-                className="p-2 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                <Heart 
-                  className={`w-6 h-6 transition-colors ${
-                    track.isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'
-                  }`}
-                />
-              </button>
             </div>
           ))}
         </div>
