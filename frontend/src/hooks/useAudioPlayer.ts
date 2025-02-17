@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, FormEvent } from "react";
 
 // Custom hook for audio handling and caching
 export const useAudioPlayerHook = () => {
@@ -22,14 +22,14 @@ export const useAudioPlayerHook = () => {
     
     request.onerror = () => console.error("Failed to open cache database");
     
-    request.onupgradeneeded = (event: any) => {
+    request.onupgradeneeded = (event: FormEvent) => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(cacheKey)) {
         db.createObjectStore(cacheKey);
       }
     };
     
-    request.onsuccess = (event:any) => {
+    request.onsuccess = (event:FormEvent) => {
       cacheDB.current = event.target.result;
     };
 
@@ -43,6 +43,62 @@ export const useAudioPlayerHook = () => {
     // Audio event listeners
     const audio = audioRef.current;
     
+    const handleTrackEnd = () => {
+      if (queue.length > 0) {
+        playNext();
+      } else {
+        setIsPlaying(false);
+      }
+    };
+
+    const playTrack = async (track: {videoId: string}) => {
+      try {
+        setIsBuffering(true);
+  
+        // const cachedTrack = await checkCache(track.videoId);
+        
+        const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Create a proper audio blob with correct MIME type
+        const audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (audioRef.current) {
+          // Clean up previous audio URL if exists
+          if (audioRef.current.src) {
+            URL.revokeObjectURL(audioRef.current.src);
+          }
+          
+          audioRef.current.src = audioUrl;
+          audioRef.current.preload = "auto";
+          
+          // Set up event handlers
+          const playPromise = audioRef.current.play();
+          if (playPromise) {
+            await playPromise;
+            setIsPlaying(true);
+            setCurrentTrack(track);
+          }
+        }
+      } catch (error) {
+        console.error('Error playing track:', error);
+        playTrack(track)
+      } finally {
+        setIsBuffering(false);
+      }
+    };
+    
+
+    const playNext = () => {
+      if (queue.length > 0) {
+        const nextTrack = queue[0];
+        setQueue(prev => prev.slice(1));
+        playTrack(nextTrack);
+      }
+    };
+  
+
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
     audio.addEventListener('loadedmetadata', () => setDuration(audio.duration));
     audio.addEventListener('ended', handleTrackEnd);
@@ -56,37 +112,29 @@ export const useAudioPlayerHook = () => {
       audio.removeEventListener('waiting', () => setIsBuffering(true));
       audio.removeEventListener('playing', () => setIsBuffering(false));
     };
-  }, []);
+  }, [queue]);
 
-  const handleTrackEnd = () => {
-    if (queue.length > 0) {
-      playNext();
-    } else {
-      setIsPlaying(false);
-    }
-  };
-
-  const checkCache = async (videoId: string) => {
-    return new Promise((resolve) => {
-      const transaction = cacheDB.current.transaction([cacheKey], 'readonly');
-      const store = transaction.objectStore(cacheKey);
-      const request = store.get(videoId);
+  // const checkCache = async (videoId: string) => {
+  //   return new Promise((resolve) => {
+  //     const transaction = cacheDB.current.transaction([cacheKey], 'readonly');
+  //     const store = transaction.objectStore(cacheKey);
+  //     const request = store.get(videoId);
       
-      request.onsuccess = () => resolve(request.result);
-    });
-  };
+  //     request.onsuccess = () => resolve(request.result);
+  //   });
+  // };
 
-  const cacheTrack = async (videoId: string, blob: Blob) => {
-    const transaction = cacheDB.current.transaction([cacheKey], 'readwrite');
-    const store = transaction.objectStore(cacheKey);
-    store.put(blob, videoId);
-  };
+  // const cacheTrack = async (videoId: string, blob: Blob) => {
+  //   const transaction = cacheDB.current.transaction([cacheKey], 'readwrite');
+  //   const store = transaction.objectStore(cacheKey);
+  //   store.put(blob, videoId);
+  // };
 
   const playTrack = async (track: {videoId: string}) => {
     try {
       setIsBuffering(true);
 
-      const cachedTrack = await checkCache(track.videoId);
+      // const cachedTrack = await checkCache(track.videoId);
       
       const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
       const arrayBuffer = await response.arrayBuffer();
@@ -146,7 +194,7 @@ export const useAudioPlayerHook = () => {
     setCurrentTime(time);
   };
 
-  const addToQueue = (track: any) => {
+  const addToQueue = (track: string[]) => {
     setQueue(prev => [...prev, track]);
   };
 

@@ -5,7 +5,7 @@ interface AudioStreamOptions {
   roomId: string;
   serverUrl: string;
   onParticipantUpdate?: (count: number) => void;
-  onChatMessage?: (message: any) => void;
+  onChatMessage?: (message: string) => void;
 }
 
 export function useAudioStream({
@@ -40,7 +40,7 @@ export function useAudioStream({
       setError(null);
       
       // Join the room
-      socket.emit('join-room', roomId, (response:any) => {
+      socket.emit('join-room', roomId, (response:{success: boolean, participants: number}) => {
         if (response && response.success) {
           if (onParticipantUpdate) {
             onParticipantUpdate(response.participants);
@@ -121,7 +121,7 @@ export function useAudioStream({
     // Initialize AudioContext
     if (!audioContextRef.current) {
       try {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = new (window.AudioContext || (window as Window).webkitAudioContext)();
       } catch (err) {
         console.error("Error creating AudioContext:", err);
         setError("Could not initialize audio system");
@@ -136,7 +136,7 @@ export function useAudioStream({
       }
       stopMicrophone();
     };
-  }, [roomId, serverUrl]);
+  }, [isMuted,onChatMessage,roomId,onParticipantUpdate,serverUrl]);
   
   // Toggle mute state
   const toggleMute = async () => {
@@ -154,53 +154,10 @@ export function useAudioStream({
     }
   };
   
-  // Start capturing and sending microphone audio
-  // const startMicrophone = async () => {
-  //   try {
-  //     if (!audioContextRef.current) {
-  //       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-  //     }
-      
-  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  //     streamRef.current = stream;
-      
-  //     const source = audioContextRef.current.createMediaStreamSource(stream);
-  //     const processor = audioContextRef.current.createScriptProcessor(2048, 1, 1);
-  //     processorRef.current = processor;
-      
-  //     processor.onaudioprocess = (e) => {
-  //       if (socketRef.current && socketRef.current.connected) {
-  //         try {
-  //           const inputData = e.inputBuffer.getChannelData(0);
-            
-  //           // Convert to Int16 for more efficient transfer
-  //           const intData = new Int16Array(inputData.length);
-  //           for (let i = 0; i < inputData.length; i++) {
-  //             intData[i] = inputData[i] * 32767;
-  //           }
-            
-  //           socketRef.current.emit('audio-data', intData.buffer);
-  //         } catch (err) {
-  //           console.error("Error processing microphone data:", err);
-  //         }
-  //       }
-  //     };
-      
-  //     source.connect(processor);
-  //     processor.connect(audioContextRef.current.destination);
-      
-  //     return true;
-  //   } catch (err) {
-  //     console.error("Error accessing microphone:", err);
-  //     throw err;
-  //   }
-  // };
-  
-  
   const startMicrophone = async () => {
     try {
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = new (window.AudioContext || (window as Window).webkitAudioContext)();
       }
   
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

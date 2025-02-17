@@ -19,7 +19,7 @@ const PlayList = ({onClose}: {onClose: ()=> void}) => {
 
   useEffect(()=>{
     setTracks(player.queue)
-  },[])
+  },[player])
 
   const handleOutsideClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {

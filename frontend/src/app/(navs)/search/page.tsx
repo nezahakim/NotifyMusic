@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import Image from "next/image";
 import { Search } from "@/utils/icons";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { useAudioPlayer, useSearch } from '@/context/AudioContext';
 
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SearchResults = ({ results, onTrackSelect }: any) => {
+const SearchResults = ({ results, onTrackSelect }: {
+  results: string[], onTrackSelect: ()=> void
+}) => {
   return (
     <div className="max-h-48 overflow-y-auto px-0">
-      {results.map((track:any) => (
+      {results.map( track => (
         <div 
           key={track.thumbnail}
           className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
@@ -43,13 +44,13 @@ const Discover = () => {
   const { searchResults, searchTracks } = useSearch();
 
 
-  const handleSubmit = (e: any) =>{
+  const handleSubmit = (e: FormEvent) =>{
     e.preventDefault()
 
     searchTracks(searchQuery)
   }
 
-  const handleMoodClick = (mood:any) =>{
+  const handleMoodClick = (mood:string) =>{
     searchTracks(mood)
   }
   
@@ -86,7 +87,7 @@ const Discover = () => {
               <Badge
                 key={mood}
                 variant="secondary"
-                onClick={e => handleMoodClick(mood)}
+                onClick={() => handleMoodClick(mood)}
                 className="px-4 py-1.5 rounded-full hover:bg-purple-100 cursor-pointer transition-all backdrop-blur-sm"
               >
                 {mood}

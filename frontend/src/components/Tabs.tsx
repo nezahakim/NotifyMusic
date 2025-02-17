@@ -30,7 +30,7 @@ const MenuTabs = () => {
             socket.on('connect', ()=>{
                 console.log("connected to Server")
             
-                socket.emit('get-live-participants', roomId, (responce:any)=>{
+                socket.emit('get-live-participants', roomId, (responce:{success: boolean, participants:number})=>{
                     if(responce && responce.success){
                         setParticipantCount(responce.participants)
                     }

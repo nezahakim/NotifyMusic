@@ -270,6 +270,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioStream } from '@/hooks/useAudioStream';
 
+
 const Live = () => {
   const [message, setMessage] = useState('');
   const [participantCount, setParticipantCount] = useState(3);
@@ -290,35 +291,48 @@ const Live = () => {
     avatar: "/cover.jpeg"
   };
 
-  const [roomParticipants, setRoomParticipants] = useState([
-    {
-      id: 1,
-      name: "Sarah James",
-      role: "Host",
-      avatar: "/cover.jpeg",
-      isSpeaking: true,
-      isHost: true,
-      isMuted: false
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      role: "Co-Host",
-      avatar: "/cover.jpeg",
-      isSpeaking: false,
-      isHost: false,
-      isMuted: false
-    },
-    {
-      id: 3,
-      name: "Alice Smith",
-      role: "Listener",
-      avatar: "/cover.jpeg",
-      isSpeaking: false,
-      isHost: false,
-      isMuted: true
-    }
-  ]);
+  interface Participant{
+    id: number;
+    name: string;
+    role: string;
+    avatar: string;
+    isSpeaking: boolean;
+    isHost: boolean;
+    isMuted: boolean;
+  }
+  const [roomParticipants, setRoomParticipants] = useState<Participant[]>([]);
+
+  useEffect(()=>{
+    setRoomParticipants([
+      {
+        id: 1,
+        name: "Sarah James",
+        role: "Host",
+        avatar: "/cover.jpeg",
+        isSpeaking: true,
+        isHost: true,
+        isMuted: false
+      },
+      {
+        id: 2,
+        name: "John Doe",
+        role: "Co-Host",
+        avatar: "/cover.jpeg",
+        isSpeaking: false,
+        isHost: false,
+        isMuted: false
+      },
+      {
+        id: 3,
+        name: "Alice Smith",
+        role: "Listener",
+        avatar: "/cover.jpeg",
+        isSpeaking: false,
+        isHost: false,
+        isMuted: true
+      }
+    ])
+  },[])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -26,7 +26,7 @@ const PlayerHeader = () => (
   </div>
 );
 
-const Controls = ({ player, onPlaylistClick }: {player: any; onPlaylistClick:any}) => {
+const Controls = ({ player, onPlaylistClick }: {player: ({isPlaying: boolean, currentTime:number, duration: number, actions: {playNext: ()=>void,togglePlay:()=>void, playPrevious:()=>void, seek: (e: number)=>void }}); onPlaylistClick:()=>void}) => {
     const { isPlaying, currentTime, duration, actions } = player;
     
     const formatTime = (seconds: number) => {
