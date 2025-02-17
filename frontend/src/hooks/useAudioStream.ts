@@ -40,7 +40,9 @@ export function useAudioStream({
       setError(null);
       
       // Join the room
-      socket.emit('join-room', roomId, (response:{success: boolean, participants: number}) => {
+      socket.emit('join-room', roomId, (response:{
+        error: Error;success: boolean, participants: number
+}) => {
         if (response && response.success) {
           if (onParticipantUpdate) {
             onParticipantUpdate(response.participants);
