@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from "next/image";
-import { Message, Mic, VolumeUp, Share } from "@/utils/icons";
+import { Message, Mic, VolumeUp, Share } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";

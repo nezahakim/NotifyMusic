@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/endpoints";
 import { Track } from "@/lib/types";
 import { useState } from "react";
 
@@ -9,7 +10,7 @@ export const useSearchHook = () => {
   const searchTracks = async (query: string | number | boolean) => {
     try {
       setIsSearching(true);
-      const response = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       setSearchResults(data);
     } catch (error) {

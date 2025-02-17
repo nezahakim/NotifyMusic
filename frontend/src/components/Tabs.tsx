@@ -1,4 +1,4 @@
-import { Home, People, Profile, Search } from "@/utils/icons";
+import { Home, People, Profile, Search } from "@/lib/icons";
 import Link from "next/link";
 
 import { usePathname } from "next/navigation";

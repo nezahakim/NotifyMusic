@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Filter } from "@/utils/icons";
+import { Filter } from "@/lib/icons";
 import Image from "next/image";
 import { useAudioPlayer } from '@/context/AudioContext';
 import { Track } from '@/lib/types';

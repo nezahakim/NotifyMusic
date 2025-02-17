@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image";
-import { Settings, Music, Clock, Heart, Edit, LogOut } from "@/utils/icons";
+import { Settings, Music, Clock, Heart, Edit, LogOut } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

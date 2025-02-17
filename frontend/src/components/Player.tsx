@@ -3,7 +3,7 @@ import {
   Shuffle, Play, Telegram, Share, Heart, Repeat,
   SkipPrevious, SkipNext, Pause,
   Playlist
-} from "@/utils/icons";
+} from "@/lib/icons";
 import Image from "next/image";
 
 import { useAudioPlayer } from "@/context/AudioContext";

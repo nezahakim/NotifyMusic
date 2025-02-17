@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import Image from "next/image";
-import { Search } from "@/utils/icons";
+import { Search } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAudioPlayer, useSearch } from '@/context/AudioContext';

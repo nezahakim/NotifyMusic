@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/endpoints";
 import { Track } from "@/lib/types";
 import { useRef, useState, useEffect } from "react";
 
@@ -35,10 +36,8 @@ export const useAudioPlayerHook = () => {
     const playTrack = async (track: Track) => {
       try {
         setIsBuffering(true);
-  
-        // const cachedTrack = await checkCache(track.videoId);
-        
-        const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
+
+        const response = await fetch(`${API_BASE}/stream?videoId=${track.videoId}`);
         const arrayBuffer = await response.arrayBuffer();
         
         // Create a proper audio blob with correct MIME type
@@ -99,7 +98,7 @@ export const useAudioPlayerHook = () => {
     try {
       setIsBuffering(true);
 
-      const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
+      const response = await fetch(`${API_BASE}/stream?videoId=${track.videoId}`);
       const arrayBuffer = await response.arrayBuffer();
       
       // Create a proper audio blob with correct MIME type
