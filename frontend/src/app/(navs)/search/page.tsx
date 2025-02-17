@@ -14,7 +14,7 @@ artist: string;
 }
 
 const SearchResults = ({ results, onTrackSelect }: {
-  results: Track[], onTrackSelect: (t: Track)=> void
+  results: Track[], onTrackSelect: (track: Track) => Promise<Track>
 }) => {
   return (
     <div className="max-h-48 overflow-y-auto px-0">

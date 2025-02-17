@@ -1,3 +1,4 @@
+import { Track } from "@/lib/types";
 import { useRef, useState, useEffect, FormEvent } from "react";
 
 // Custom hook for audio handling and caching
@@ -8,31 +9,11 @@ export const useAudioPlayerHook = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [currentTrack, setCurrentTrack] = useState(null);
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [queue, setQueue] = useState([]);
   const [isBuffering, setIsBuffering] = useState(false);
 
-  // Cache management using IndexedDB
-  const cacheKey = 'music-cache';
-  const cacheDB = useRef(null);
-
   useEffect(() => {
-    // Initialize IndexedDB
-    const request = indexedDB.open('MusicCache', 1);
-    
-    request.onerror = () => console.error("Failed to open cache database");
-    
-    request.onupgradeneeded = (event: FormEvent) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(cacheKey)) {
-        db.createObjectStore(cacheKey);
-      }
-    };
-    
-    request.onsuccess = (event:FormEvent) => {
-      cacheDB.current = event.target.result;
-    };
-
     if (typeof window === 'undefined') return;
     
     // Initialize audio element if not already done
@@ -51,7 +32,7 @@ export const useAudioPlayerHook = () => {
       }
     };
 
-    const playTrack = async (track: {videoId: string}) => {
+    const playTrack = async (track: Track) => {
       try {
         setIsBuffering(true);
   
@@ -114,23 +95,7 @@ export const useAudioPlayerHook = () => {
     };
   }, [queue]);
 
-  // const checkCache = async (videoId: string) => {
-  //   return new Promise((resolve) => {
-  //     const transaction = cacheDB.current.transaction([cacheKey], 'readonly');
-  //     const store = transaction.objectStore(cacheKey);
-  //     const request = store.get(videoId);
-      
-  //     request.onsuccess = () => resolve(request.result);
-  //   });
-  // };
-
-  // const cacheTrack = async (videoId: string, blob: Blob) => {
-  //   const transaction = cacheDB.current.transaction([cacheKey], 'readwrite');
-  //   const store = transaction.objectStore(cacheKey);
-  //   store.put(blob, videoId);
-  // };
-
-  const playTrack = async (track: {videoId: string}) => {
+  const playTrack = async (track: Track) => {
     try {
       setIsBuffering(true);
 
@@ -196,7 +161,7 @@ export const useAudioPlayerHook = () => {
     }
   };
   
-  const addToQueue = (track: { videoId: string }) => {
+  const addToQueue = (track: Track) => {
     setQueue(prev => [...prev, track]);
   };
   
@@ -209,7 +174,7 @@ export const useAudioPlayerHook = () => {
     }
   };
 
-  const [history, setHistory] = useState<{ videoId: string }[]>([]);
+  const [history, setHistory] = useState<Track[]>([]);
 
   const playPrevious = () => {
     if (history.length > 0) {
