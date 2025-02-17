@@ -1,6 +1,4 @@
 "use client"
-
-import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import Player from '@/components/Player';
 import Header from '@/components/Header';
@@ -9,7 +7,6 @@ import MenuTabs from '@/components/Tabs';
 
 
 const Home = () => {
-    const [activeTab, setActiveTab] = useState('home');
 
     return (
         <div className="h-screen flex flex-col">
@@ -26,7 +23,7 @@ const Home = () => {
                 {/* <div className="w-full h-0.5 bg-gray-100">
                     <div className="w-1/3 h-full bg-gray-900"></div>
                 </div> */}
-                <MenuTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+                <MenuTabs />
             </footer>
             
             {/* Background Image */}
