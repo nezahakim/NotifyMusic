@@ -5,12 +5,13 @@ import React, { createContext, useContext } from 'react';
 import { useAudioPlayerHook } from '@/hooks/useAudioPlayer';
 import { useSearchHook } from '@/hooks/useSearch';
 
-// Create Context
-interface ContextFace{
-  value: ()=>void
+interface ContextFace {
+  player: ReturnType<typeof useAudioPlayerHook>;
+  search: ReturnType<typeof useSearchHook>;
 }
 
-const AudioContext = createContext<ContextFace>(undefined);
+
+const AudioContext = createContext<ContextFace | undefined>(undefined);
 
 // Create Provider Component that uses your existing hooks
 export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
