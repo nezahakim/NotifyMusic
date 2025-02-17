@@ -189,14 +189,17 @@ export const useAudioPlayerHook = () => {
     }
   };
 
-  const seek = (time: React.SetStateAction<number>) => {
-    audioRef.current.currentTime = time;
-    setCurrentTime(time);
+  const seek = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
   };
-
-  const addToQueue = (track: string[]) => {
+  
+  const addToQueue = (track: { videoId: string }) => {
     setQueue(prev => [...prev, track]);
   };
+  
 
   const playNext = () => {
     if (queue.length > 0) {
@@ -206,10 +209,16 @@ export const useAudioPlayerHook = () => {
     }
   };
 
+  const [history, setHistory] = useState<{ videoId: string }[]>([]);
+
   const playPrevious = () => {
-    // Implementation for previous track functionality
-    // Could store history of played tracks
+    if (history.length > 0) {
+      const prevTrack = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1));
+      playTrack(prevTrack);
+    }
   };
+  
 
   return {
     isPlaying,
