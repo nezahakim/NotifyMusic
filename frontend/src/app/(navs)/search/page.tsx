@@ -58,8 +58,8 @@ const Discover = () => {
   
   return (
     
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <div className="overflow-y-auto  ">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6 h-full">
         {/* Header */}
         <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
           Notify Discover
@@ -99,7 +99,7 @@ const Discover = () => {
         </div>
 
         {/* Search Results */}
-        <div className="space-y-3">
+        <div className="space-y-3 ">
           <h2 className="text-xl font-bold text-gray-800">Search Results</h2>
           {searchResults.length > 0 ? (
                   <SearchResults 
