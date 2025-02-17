@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
 
   socket.on('get-live-participants', (roomId, callback)=>{
     // Send current participant count
-    if(roomId){
+    if(roomId && roomId !== undefined){
       const participantCount = activeRooms.get(roomId).size;    
     if (callback) callback({ success: true, participants: participantCount });
     }
