@@ -6,15 +6,12 @@ import { Search } from "@/utils/icons";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAudioPlayer, useSearch } from '@/context/AudioContext';
+import { Track } from '@/lib/types';
 
-interface Track{
-thumbnail: string;
-title: string;
-artist: string;
-}
 
 const SearchResults = ({ results, onTrackSelect }: {
-  results: Track[], onTrackSelect: (track: Track) => Promise<Track>
+  results: Track[];
+  onTrackSelect: (track: Track) => Promise<Track>;
 }) => {
   return (
     <div className="max-h-48 overflow-y-auto px-0">

@@ -99,8 +99,6 @@ export const useAudioPlayerHook = () => {
     try {
       setIsBuffering(true);
 
-      // const cachedTrack = await checkCache(track.videoId);
-      
       const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
       const arrayBuffer = await response.arrayBuffer();
       
@@ -131,6 +129,8 @@ export const useAudioPlayerHook = () => {
     } finally {
       setIsBuffering(false);
     }
+
+    return track; 
   };
   
   // Add cleanup on unmount

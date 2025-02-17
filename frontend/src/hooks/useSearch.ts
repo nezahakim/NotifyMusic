@@ -1,8 +1,9 @@
+import { Track } from "@/lib/types";
 import { useState } from "react";
 
 // Search hook
 export const useSearchHook = () => {
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const searchTracks = async (query: string | number | boolean) => {
