@@ -73,7 +73,7 @@ app.get("/stream", async ({ query, set }) => {
     url
   ], {
     stdout: "pipe",
-    stderr: "ignore",
+    stderr: "pipe", 
   });
 
   // Set correct headers for MP3 streaming
