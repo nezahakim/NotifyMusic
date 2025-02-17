@@ -1,9 +1,7 @@
 "use client"
-import { useState } from 'react';
 import Image from "next/image";
 import { Settings, Music, Clock, Heart, Edit, LogOut } from "@/utils/icons";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Account = () => {

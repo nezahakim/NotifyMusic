@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from "next/image";
-import { Playlist, Search } from "@/utils/icons";
+import { Search } from "@/utils/icons";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import axios from "axios";
 import { useAudioPlayer, useSearch } from '@/context/AudioContext';
 
 

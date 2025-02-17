@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, Heart, Plus } from "@/utils/icons";
+import { Filter, Heart } from "@/utils/icons";
 import Image from "next/image";
 
 interface Track {

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
 
 const MenuTabs = () => {
