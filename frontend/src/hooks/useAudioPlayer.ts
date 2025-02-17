@@ -1,5 +1,5 @@
 import { Track } from "@/lib/types";
-import { useRef, useState, useEffect, FormEvent } from "react";
+import { useRef, useState, useEffect } from "react";
 
 // Custom hook for audio handling and caching
 export const useAudioPlayerHook = () => {
