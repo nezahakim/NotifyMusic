@@ -4,7 +4,6 @@ import { useRef, useState, useEffect } from "react";
 export const useAudioPlayerHook = () => {
   // const audioRef = useRef(new Audio());
   const audioRef = useRef(typeof window !== 'undefined' ? new window.Audio() : null);
-  
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -67,7 +66,7 @@ export const useAudioPlayerHook = () => {
     }
   };
 
-  const checkCache = async (videoId: any) => {
+  const checkCache = async (videoId: String) => {
     return new Promise((resolve) => {
       const transaction = cacheDB.current.transaction([cacheKey], 'readonly');
       const store = transaction.objectStore(cacheKey);
@@ -77,57 +76,17 @@ export const useAudioPlayerHook = () => {
     });
   };
 
-  const cacheTrack = async (videoId: any, blob: Blob) => {
+  const cacheTrack = async (videoId: String, blob: Blob) => {
     const transaction = cacheDB.current.transaction([cacheKey], 'readwrite');
     const store = transaction.objectStore(cacheKey);
     store.put(blob, videoId);
   };
 
-  // const playTrack = async (track: any) => {
-  //   try {
-  //     setIsBuffering(true);
-      
-  //     // Check cache first
-  //     const cachedTrack = await checkCache(track.videoId);
-  //     let audioUrl;
-      
-  //     if (cachedTrack) {
-  //       audioUrl = URL.createObjectURL(cachedTrack);
-  //     } else {
-  //       // Stream from backend
-  //       const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
-
-  //       const blob = await response.blob();
-  //       console.log("Blob type:", blob.type, "Size:", blob.size);
-
-  //       audioUrl = URL.createObjectURL(blob);
-        
-  //       // Cache for future use
-  //       await cacheTrack(track.videoId, blob);
-  //     }
-
-  //     if (audioRef.current) { 
-  //       audioRef.current.src = audioUrl;
-  //       setCurrentTrack(track);
-  //       await audioRef.current.play();
-  //       setIsPlaying(true);
-  //     }
-
-  //   } catch (error) {
-  //     const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
-  //     const blob = await response.blob();
-  //     console.log(response)
-  //     console.log("Blob type:", blob.type, "Size:", blob.size);
-
-  //     console.error('Error playing track:', error);
-  //     setIsBuffering(false);
-  //   }
-  // };
-
-
-  const playTrack = async (track: any) => {
+  const playTrack = async (track: {videoId: String}) => {
     try {
       setIsBuffering(true);
+
+      const cachedTrack = await checkCache(track.videoId);
       
       const response = await fetch(`http://localhost:3001/stream?videoId=${track.videoId}`);
       const arrayBuffer = await response.arrayBuffer();

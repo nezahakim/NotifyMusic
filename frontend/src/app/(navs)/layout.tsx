@@ -1,15 +1,15 @@
 "use client"
-import React, { useState } from "react";
 import Image from "next/image";
 import Header from '@/components/Header';
 import MenuTabs from '@/components/Tabs';
+import { useAudioPlayer } from "@/context/AudioContext";
 
 export default function RootLayout({
     children,}: Readonly<{
         children: React.ReactNode;
 }>){
-const [activeTab, setActiveTab] = useState('home');
 
+const player = useAudioPlayer()
 
     
 return( <div className="h-screen flex flex-col">
@@ -30,13 +30,13 @@ return( <div className="h-screen flex flex-col">
     </footer>
     
     {/* Background Image */}
-    <Image 
-        className="fixed -inset-0 -z-50 blur-xl opacity-30" 
-        src="/cover.jpeg" 
+    {player?.currentTrack !== null && player.currentTrack.thumbnail !== undefined ? (<Image 
+        className="fixed -inset-0 -z-50 blur-xl opacity-40" 
+        src={player.currentTrack.thumbnail} 
         alt="cover" 
         layout="fill" 
         objectFit="cover"
         priority
-    />
+    />): ''}
 </div>)
 }

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAudioPlayer, useSearch } from '@/context/AudioContext';
 
 
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SearchResults = ({ results, onTrackSelect }: any) => {
   return (
     <div className="max-h-48 overflow-y-auto px-0">
