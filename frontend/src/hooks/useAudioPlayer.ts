@@ -66,7 +66,7 @@ export const useAudioPlayerHook = () => {
     }
   };
 
-  const checkCache = async (videoId: String) => {
+  const checkCache = async (videoId: string) => {
     return new Promise((resolve) => {
       const transaction = cacheDB.current.transaction([cacheKey], 'readonly');
       const store = transaction.objectStore(cacheKey);
@@ -76,13 +76,13 @@ export const useAudioPlayerHook = () => {
     });
   };
 
-  const cacheTrack = async (videoId: String, blob: Blob) => {
+  const cacheTrack = async (videoId: string, blob: Blob) => {
     const transaction = cacheDB.current.transaction([cacheKey], 'readwrite');
     const store = transaction.objectStore(cacheKey);
     store.put(blob, videoId);
   };
 
-  const playTrack = async (track: {videoId: String}) => {
+  const playTrack = async (track: {videoId: string}) => {
     try {
       setIsBuffering(true);
 

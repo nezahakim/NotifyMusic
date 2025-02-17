@@ -1,21 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Filter, Heart } from "@/utils/icons";
 import Image from "next/image";
+import { useAudioPlayer } from '@/context/AudioContext';
 
 interface Track {
   id: number;
   title: string;
   artist: string;
-  image: string;
+  thumbnail: string;
   isLiked: boolean;
 }
 
 const PlayList = ({onClose}: {onClose: ()=> void}) => {
   const [isVisible, setIsVisible] = useState(true);
-  const [tracks, setTracks] = useState<Track[]>([
-    { id: 1, title: "Amazing Song 1", artist: "Artist 1", image: "/cover.jpeg", isLiked: false },
-    { id: 2, title: "Beautiful Track 2", artist: "Artist 2", image: "/cover.jpeg", isLiked: false },
-  ]);
+  const player = useAudioPlayer()
+
+  const [tracks, setTracks] = useState<Track[]>([]);
+
+  useEffect(()=>{
+    setTracks(player.queue)
+  },[])
 
   const handleOutsideClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -50,14 +54,15 @@ const PlayList = ({onClose}: {onClose: ()=> void}) => {
         </div>
 
         {/* Tracks List */}
+        {tracks.length <= 0 ?'No queued songs!':''}
         <div className="overflow-y-auto h-[calc(100%-5rem)] pb-20">
-          {tracks.map((track) => (
+          {tracks.map((track, id) => (
             <div
-              key={track.id}
+              key={id}
               className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200 mb-2"
             >
               <Image
-                src={track.image}
+                src={track.thumbnail}
                 alt={track.title}
                 width={56}
                 height={56}
