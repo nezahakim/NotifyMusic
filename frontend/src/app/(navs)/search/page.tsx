@@ -7,9 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAudioPlayer, useSearch } from '@/context/AudioContext';
 
+interface Track{
+thumbnail: string;
+title: string;
+artist: string;
+}
 
 const SearchResults = ({ results, onTrackSelect }: {
-  results: string[], onTrackSelect: ()=> void
+  results: Track[], onTrackSelect: (t: Track)=> void
 }) => {
   return (
     <div className="max-h-48 overflow-y-auto px-0">
