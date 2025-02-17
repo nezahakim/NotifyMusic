@@ -10,7 +10,7 @@ export const useAudioPlayerHook = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [queue, setQueue] = useState([]);
+  const [queue, setQueue] = useState<Track[]>([]);
   const [isBuffering, setIsBuffering] = useState(false);
 
   useEffect(() => {
@@ -162,7 +162,7 @@ export const useAudioPlayerHook = () => {
   };
   
   const addToQueue = (track: Track) => {
-    setQueue(prev => [...prev, track]);
+    setQueue((prev) => [...prev, track]);
   };
   
 
