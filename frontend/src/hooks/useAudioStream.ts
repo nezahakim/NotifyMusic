@@ -123,7 +123,7 @@ export function useAudioStream({
     // Initialize AudioContext
     if (!audioContextRef.current) {
       try {
-        audioContextRef.current = new (window.AudioContext || (window as Window).webkitAudioContext)();
+        audioContextRef.current = new (window.AudioContext || window?.webkitAudioContext)();
       } catch (err) {
         console.error("Error creating AudioContext:", err);
         setError("Could not initialize audio system");
