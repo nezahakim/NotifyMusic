@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/static": "^1.2.0",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "elysia": "^1.2.12",
+    "socket.io": "^4.8.1",
+    "telegraf": "^4.16.3",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "@types/bun": "latest"
+  },
+  "name": "stream",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch server.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
