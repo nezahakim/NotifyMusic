@@ -12,7 +12,7 @@ interface RoomState {
     isStreaming: boolean;
 }
 
-const app = express()
+const app = new express()
 const server = createServer(app)
 
 const io = new Server(server, {
@@ -21,7 +21,7 @@ const io = new Server(server, {
         methods: ["POST", "GET", "PUT", "DELETE"],
         credentials: true,
     },
-    transports: ['websocket', 'polling']
+    transports: ['websocket']
 });
 
 const activeRooms = new Map<string, RoomState>();
@@ -296,14 +296,14 @@ io.on('connection', (socket) => {
         }
       })
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason: any) => {
         if (currentRoom) {
             const room = activeRooms.get(currentRoom);
             if (room) {
                 room.participants.delete(socket.id);
                 if (room.participants.size === 0) {
                     activeRooms.delete(currentRoom);
-                    console.log("Room cleaned up (disconnect):", currentRoom);
+                    console.log("Room cleaned up (disconnect):", currentRoom, reason);
                 } else {
                     broadcastRoomState(currentRoom);
                 }

@@ -23,13 +23,13 @@ interface SocketContextType {
     reconnect: () => void;
 }
 
-// const defaultRoomState: RoomState = {
-//     participants: 0,
-//     currentTrack: null,
-//     isPlaying: false,
-//     currentTime: 0,
-//     lastUpdateTime: Date.now()
-// };
+const defaultRoomState: RoomState = {
+    participants: 0,
+    currentTrack: null,
+    isPlaying: false,
+    currentTime: 0,
+    lastUpdateTime: Date.now()
+};
 
 
 const SocketContext = createContext<SocketContextType>({
@@ -82,9 +82,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeSocket = useCallback(()=>{
         socketRef.current = io(API_BASE, {
             transports: ['websocket'],
-            reconnection:true,
+            reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            autoConnect: true
         });
 
         socketRef.current.on('connect', () => {
@@ -128,7 +131,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 setRoomState(null);
             }
         };
-    }, [initializeSocket]);
+    },[]);
 
 
     const reconnect = () => {
