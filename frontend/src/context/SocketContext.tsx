@@ -82,6 +82,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeSocket = useCallback(()=>{
         socketRef.current = io(API_BASE, {
             transports: ['websocket'],
+            reconnection:true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
         });
