@@ -48,6 +48,37 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [roomState, setRoomState] = useState<RoomState | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
+    const joinRoom = async (roomId: string): Promise<{ success: boolean; error?: string }> => {
+        return new Promise((resolve) => {
+            if (!socketRef.current || !isConnected) {
+                resolve({ success: false, error: 'Socket not connected' });
+                return;
+            }
+
+            socketRef.current.emit('join-room', roomId, (response: { 
+                success: boolean; 
+                error?: string;
+                state?: RoomState;
+            }) => {
+                if (response.success && response.state) {
+                    setCurrentRoom(roomId);
+                    setRoomState(response.state);
+                    resolve({ success: true });
+                } else {
+                    resolve({ success: false, error: response.error || 'Failed to join room' });
+                }
+            });
+        });
+    };
+
+    const leaveRoom = () => {
+        if (socketRef.current && currentRoom) {
+            socketRef.current.emit('leave-room', currentRoom);
+            setCurrentRoom(null);
+            setRoomState(null);
+        }
+    };
+
     const initializeSocket = useCallback(()=>{
         socketRef.current = io(API_BASE, {
             transports: ['websocket'],
@@ -82,7 +113,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socketRef.current.on('error', (error: string) => {
             console.error('Socket error:', error);
         });
-    },[socketRef]);
+    },[socketRef,joinRoom,currentRoom]);
 
     useEffect(() => {
         initializeSocket();
@@ -98,36 +129,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         };
     }, [initializeSocket]);
 
-    const joinRoom = async (roomId: string): Promise<{ success: boolean; error?: string }> => {
-        return new Promise((resolve) => {
-            if (!socketRef.current || !isConnected) {
-                resolve({ success: false, error: 'Socket not connected' });
-                return;
-            }
-
-            socketRef.current.emit('join-room', roomId, (response: { 
-                success: boolean; 
-                error?: string;
-                state?: RoomState;
-            }) => {
-                if (response.success && response.state) {
-                    setCurrentRoom(roomId);
-                    setRoomState(response.state);
-                    resolve({ success: true });
-                } else {
-                    resolve({ success: false, error: response.error || 'Failed to join room' });
-                }
-            });
-        });
-    };
-
-    const leaveRoom = () => {
-        if (socketRef.current && currentRoom) {
-            socketRef.current.emit('leave-room', currentRoom);
-            setCurrentRoom(null);
-            setRoomState(null);
-        }
-    };
 
     const reconnect = () => {
         if (socketRef.current) {
