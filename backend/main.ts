@@ -15,7 +15,7 @@ interface RoomState {
 const app = express()
 const server = createServer(app)
 
-const io = new Server(app, {
+const io = new Server(server, {
     cors: {
         origin: ['https://notifymusic.vercel.app','http://localhost:3000'],
         methods: ["POST", "GET", "PUT", "DELETE"],
