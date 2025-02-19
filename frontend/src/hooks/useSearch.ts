@@ -42,11 +42,10 @@ export const useSearchHook = () => {
             setSearchError(null);
         });
 
-        socket.on('search-error', ({ message, query }) => {
+        socket.on('search-error', ({ message }) => {
             setSearchError(message);
             setIsSearching(false);
             setSearchResults([]);
-            query;
         });
 
         return () => {
