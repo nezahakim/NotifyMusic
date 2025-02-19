@@ -86,8 +86,6 @@ const Live = () => {
     toggleMute,
     sendChatMessage
   } = useAudioStream({
-    roomId,
-    serverUrl: API_BASE,
     onParticipantUpdate: (count) => {
       setParticipantCount(count);
     },
