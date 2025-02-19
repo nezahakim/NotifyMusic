@@ -4,7 +4,7 @@ import { Track } from "@/lib/types";
 
 export const useAudioPlayerHook = () => {
     const audioRef = useRef(typeof window !== 'undefined' ? new window.Audio() : null);
-    const { socket, currentRoom, roomState } = useSocket();
+    const { socket, currentRoom } = useSocket();
     const audioChunksRef = useRef<Uint8Array[]>([]);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -56,7 +56,7 @@ export const useAudioPlayerHook = () => {
             console.log('Stream starting:', track);
             audioChunksRef.current = [];
             setIsBuffering(true);
-            setCurrentTime(0);
+            setCurrentTime(startTime);
             setCurrentTrack(track);
             
             if (audio.src) {

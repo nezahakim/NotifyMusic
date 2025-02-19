@@ -11,7 +11,7 @@ export default function RootLayout({
 }>){
 
 const player = useAudioPlayer();
-const {socket,joinRoom} = useSocket()
+const {joinRoom} = useSocket()
 
 const fetch = async () =>{
       const result = await joinRoom('roomId-123');

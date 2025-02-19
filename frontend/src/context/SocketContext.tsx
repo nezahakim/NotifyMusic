@@ -23,13 +23,14 @@ interface SocketContextType {
     reconnect: () => void;
 }
 
-const defaultRoomState: RoomState = {
-    participants: 0,
-    currentTrack: null,
-    isPlaying: false,
-    currentTime: 0,
-    lastUpdateTime: Date.now()
-};
+// const defaultRoomState: RoomState = {
+//     participants: 0,
+//     currentTrack: null,
+//     isPlaying: false,
+//     currentTime: 0,
+//     lastUpdateTime: Date.now()
+// };
+
 
 const SocketContext = createContext<SocketContextType>({
     socket: null,
@@ -78,7 +79,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             setRoomState(prev => prev ? { ...prev, ...update } : null);
         });
 
-        socketRef.current.on('error', (error: any) => {
+        socketRef.current.on('error', (error: string) => {
             console.error('Socket error:', error);
         });
     };
@@ -95,7 +96,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 setRoomState(null);
             }
         };
-    }, []);
+    }, [initializeSocket]);
 
     const joinRoom = async (roomId: string): Promise<{ success: boolean; error?: string }> => {
         return new Promise((resolve) => {

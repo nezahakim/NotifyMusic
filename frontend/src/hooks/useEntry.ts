@@ -28,6 +28,7 @@ export const useEntry = () => {
                 setError(result.error || 'Failed to join room');
             }
         } catch (err) {
+            console.log(err)
             setError('Connection failed. Please try again.');
         } finally {
             setIsLoading(false);

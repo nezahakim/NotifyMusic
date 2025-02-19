@@ -28,7 +28,7 @@ import { useState, useEffect } from "react";
 import { useSocket } from '@/context/SocketContext';
 
 export const useSearchHook = () => {
-    const { socket, currentRoom, isConnected , joinRoom} = useSocket();
+    const { socket, currentRoom, isConnected } = useSocket();
     const [searchResults, setSearchResults] = useState<Track[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
@@ -46,6 +46,7 @@ export const useSearchHook = () => {
             setSearchError(message);
             setIsSearching(false);
             setSearchResults([]);
+            query;
         });
 
         return () => {
