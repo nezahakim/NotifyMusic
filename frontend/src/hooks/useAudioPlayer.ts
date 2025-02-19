@@ -214,6 +214,8 @@ export const useAudioPlayerHook = () => {
 
     const playNext = () => { return; };
     const playPrevious = () => { return; };
+    const queue = () => { return; };
+    
     
     return {
         isPlaying,
@@ -222,6 +224,7 @@ export const useAudioPlayerHook = () => {
         currentTrack,
         isBuffering,
         hasUserInteracted,
+        queue,
         actions: {
             playNext,
             playPrevious,
