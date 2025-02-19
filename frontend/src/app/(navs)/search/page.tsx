@@ -11,8 +11,9 @@ import { Track } from '@/lib/types';
 
 const SearchResults = ({ results, onTrackSelect }: {
   results: Track[];
-  onTrackSelect: (track: Track) => Promise<Track>;
+  onTrackSelect: (track: Track) => Promise<void>;
 }) => {
+
   return (
     <div className="max-h-48 overflow-y-auto px-0">
       {results.map( track => (
@@ -48,7 +49,6 @@ const Discover = () => {
 
   const handleSubmit = (e: FormEvent) =>{
     e.preventDefault()
-
     searchTracks(searchQuery)
   }
 

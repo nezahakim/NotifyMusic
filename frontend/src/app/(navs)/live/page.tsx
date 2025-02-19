@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioStream } from '@/hooks/useAudioStream';
+import { API_BASE } from '@/lib/endpoints';
 
 
 const Live = () => {
@@ -21,7 +22,7 @@ const Live = () => {
     { id: 3, user: "Maria", message: "Can you play your new single?", avatar: "/cover.jpeg", isHost: false }
   ]);
 
-  const roomId = "acoustic-night-1";
+  const roomId = "roomId-1234";
 
   const currentUser = {
     name: "Sarah James",
@@ -86,7 +87,7 @@ const Live = () => {
     sendChatMessage
   } = useAudioStream({
     roomId,
-    serverUrl: "http://localhost:3001",
+    serverUrl: API_BASE,
     onParticipantUpdate: (count) => {
       setParticipantCount(count);
     },

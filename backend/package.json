@@ -17,8 +17,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start":"bun run server.ts",
-    "dev": "bun run --watch server.ts"
+    "start":"bun run main.ts",
+    "dev": "bun run --watch main.ts"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

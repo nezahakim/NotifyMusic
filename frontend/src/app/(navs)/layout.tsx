@@ -3,6 +3,7 @@ import Image from "next/image";
 import Header from '@/components/Header';
 import MenuTabs from '@/components/Tabs';
 import { useAudioPlayer } from "@/context/AudioContext";
+import { useSocket } from "@/context/SocketContext";
 
 export default function RootLayout({
     children,}: Readonly<{
@@ -10,6 +11,13 @@ export default function RootLayout({
 }>){
 
 const player = useAudioPlayer();
+const {socket,joinRoom} = useSocket()
+
+const fetch = async () =>{
+      const result = await joinRoom('roomId-123');
+      return result;
+    }
+    fetch()
 
 // Ensure `player?.currentTrack` exists before accessing `thumbnail`
 const backgroundImage = player?.currentTrack?.thumbnail ? (
