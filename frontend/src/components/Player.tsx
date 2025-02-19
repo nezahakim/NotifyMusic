@@ -9,6 +9,7 @@ import Image from "next/image";
 import { useAudioPlayer } from "@/context/AudioContext";
 import { useState } from "react";
 import PlayList from "./playlist";
+import { Track } from "@/lib/types";
 
 const PlayerHeader = () => (
   <div className="w-full px-4 py-2 flex items-center justify-between">
@@ -26,7 +27,23 @@ const PlayerHeader = () => (
   </div>
 );
 
-const Controls = ({ player, onPlaylistClick }: {player: ({isPlaying: boolean, currentTime:number, duration: number, actions: {playNext: ()=>void,togglePlay:()=>void, playPrevious:()=>void, seek: (e: number)=>void }}); onPlaylistClick:()=>void}) => {
+type Player = {
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  currentTrack: Track | null;
+  isBuffering: boolean;
+  hasUserInteracted: boolean;
+  actions: {
+      playNext: () => void;
+      playPrevious: () => void;
+      playTrack: (track: Track) => Promise<void>;
+      togglePlay: () => void;
+      seek: (time: number) => void;
+  };
+}
+
+const Controls = ({ player, onPlaylistClick }: {player: Player; onPlaylistClick:()=>void}) => {
     const { isPlaying, currentTime, duration, actions } = player;
     
     const formatTime = (seconds: number) => {

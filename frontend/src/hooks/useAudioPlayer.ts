@@ -199,6 +199,7 @@ export const useAudioPlayerHook = () => {
         } catch (error) {
             console.error('Playback control failed:', error);
         }
+        return;
     };
 
     const seek = (time: number) => {
@@ -210,6 +211,9 @@ export const useAudioPlayerHook = () => {
             roomId: currentRoom
         });
     };
+
+    const playNext = () => { return; };
+    const playPrevious = () => { return; };
     
     return {
         isPlaying,
@@ -219,6 +223,8 @@ export const useAudioPlayerHook = () => {
         isBuffering,
         hasUserInteracted,
         actions: {
+            playNext,
+            playPrevious,
             playTrack,
             togglePlay,
             seek
