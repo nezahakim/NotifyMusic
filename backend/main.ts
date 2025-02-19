@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import { spawn } from 'bun';
+import { createServer } from 'http';
 
 interface RoomState {
     participants: Set<string>;
@@ -10,7 +11,9 @@ interface RoomState {
     isStreaming: boolean;
 }
 
-const io = new Server(3001, {
+const app = createServer()
+
+const io = new Server(app, {
     cors: {
         origin: ['https://notifymusic.vercel.app','http://localhost:3000'],
         methods: ["POST", "GET", "PUT", "DELETE"],
@@ -307,4 +310,6 @@ io.on('connection', (socket) => {
     });
 });
 
-console.log("Socket server running on port 3001");
+app.listen(3001, ()=>{
+    console.log("Socket server running on port 3001"); 
+})
