@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE } from '@/lib/endpoints';
 import { Track } from '@/lib/types';
@@ -23,13 +23,13 @@ interface SocketContextType {
     reconnect: () => void;
 }
 
-const defaultRoomState: RoomState = {
-    participants: 0,
-    currentTrack: null,
-    isPlaying: false,
-    currentTime: 0,
-    lastUpdateTime: Date.now()
-};
+// const defaultRoomState: RoomState = {
+//     participants: 0,
+//     currentTrack: null,
+//     isPlaying: false,
+//     currentTime: 0,
+//     lastUpdateTime: Date.now()
+// };
 
 
 const SocketContext = createContext<SocketContextType>({
