@@ -60,8 +60,6 @@ export const LiveProvider = ({ children }: { children: ReactNode }) => {
     toggleMute,
     sendChatMessage
   } = useAudioStream({
-    roomId: "acoustic-night-1",
-    serverUrl: "http://localhost:3001",
     onParticipantUpdate: (count) => {
       setParticipantCount(count);
     },
