@@ -1,8 +1,8 @@
 "use client"
+import { Entry } from "@/components/Entry";
 
 const Home = () => {
-    window.location.href = "/home"
-    return;
+    return (<Entry/>);
 };
 
 export default Home;
