@@ -12,7 +12,7 @@ interface RoomState {
 
 const io = new Server(3001, {
     cors: {
-        origin: "*",
+        origin: ['https://notifymusic.vercel.app','http://localhost:3000'],
         methods: ["POST", "GET", "PUT", "DELETE"],
         credentials: true,
     },
