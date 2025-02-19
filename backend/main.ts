@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { spawn } from 'bun';
 import { createServer } from 'http';
+import express from 'express'
 
 interface RoomState {
     participants: Set<string>;
@@ -11,7 +12,8 @@ interface RoomState {
     isStreaming: boolean;
 }
 
-const app = createServer()
+const app = express()
+const server = createServer(app)
 
 const io = new Server(app, {
     cors: {
@@ -310,6 +312,10 @@ io.on('connection', (socket) => {
     });
 });
 
-app.listen(3001, ()=>{
+app.get('/', async (req: any, res: any)=>{
+    res.send('Hello, welcome!!!')
+})
+
+server.listen(3001, ()=>{
     console.log("Socket server running on port 3001"); 
 })

@@ -5,6 +5,7 @@
     "axios": "^1.7.9",
     "cheerio": "^1.0.0",
     "elysia": "^1.2.12",
+    "express": "^4.21.2",
     "socket.io": "^4.8.1",
     "telegraf": "^4.16.3",
     "uuid": "^11.0.5"
@@ -17,7 +18,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start":"bun run main.ts",
+    "start": "bun run main.ts",
     "dev": "bun run --watch main.ts"
   },
   "peerDependencies": {
