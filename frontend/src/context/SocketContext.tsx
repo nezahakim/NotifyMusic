@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext,useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE } from '@/lib/endpoints';
 import { Track } from '@/lib/types';
@@ -80,61 +80,50 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
-        const initializeSocket = ()=>{
-            socketRef.current = io(API_BASE, {
-                transports: ['websocket'],
-                reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000,
-                timeout: 20000,
-                autoConnect: true
-            });
+            if (!socketRef.current) {
+                socketRef.current = io(API_BASE, {
+                    transports: ['websocket'],
+                    reconnection: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 5000,
+                    timeout: 20000,
+                    autoConnect: true
+                });
     
-            socketRef.current.on('connect', () => {
-                setIsConnected(true);
-                console.log('Socket connected:', socketRef.current?.id);
-                
-                if (currentRoom) {
-                    joinRoom(currentRoom);
-                }
-            });
+                // Event listeners
+                socketRef.current.on('connect', () => {
+                    setIsConnected(true);
+                    console.log('Socket connected:', socketRef.current?.id);
+                });
     
-            socketRef.current.on('disconnect', () => {
-                setIsConnected(false);
-                console.log('Socket disconnected');
-            });
+                socketRef.current.on('disconnect', () => {
+                    setIsConnected(false);
+                    console.log('Socket disconnected');
+                });
     
-            // Handle room state updates
-            socketRef.current.on('room-state', (state: RoomState) => {
-                setRoomState(state);
-            });
+                socketRef.current.on('room-state', (state: RoomState) => {
+                    setRoomState(state);
+                });
     
-            // Handle playback state updates
-            socketRef.current.on('playback-update', (update: Partial<RoomState>) => {
-                setRoomState(prev => prev ? { ...prev, ...update } : null);
-            });
-    
-            socketRef.current.on('error', (error: string) => {
-                console.error('Socket error:', error);
-            });
-        }
-    
-        initializeSocket();
-
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.disconnect();
-                socketRef.current = null;
-                setIsConnected(false);
-                setCurrentRoom(null);
-                setRoomState(null);
+                socketRef.current.on('playback-update', (update: Partial<RoomState>) => {
+                    setRoomState(prev => prev ? { ...prev, ...update } : null);
+                });
             }
-        };
-    },[]);
+    
+            // Cleanup
+            return () => {
+                if (socketRef.current) {
+                    socketRef.current.disconnect();
+                    socketRef.current = null;
+                    setIsConnected(false);
+                    setCurrentRoom(null);
+                    setRoomState(null);
+                }
+            };
+        }, []);
 
 
-    const reconnect = () => {
         const initializeSocket = () =>{
             socketRef.current = io(API_BASE, {
                 transports: ['websocket'],
@@ -175,6 +164,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             });
         }
 
+    const reconnect = () => {
         if (socketRef.current) {
             socketRef.current.disconnect();
         }

@@ -19,7 +19,6 @@ const fetch = async () =>{
       }
       fetch()
 
-// Ensure `player?.currentTrack` exists before accessing `thumbnail`
 const backgroundImage = player?.currentTrack?.thumbnail ? (
     <Image 
         className="fixed -inset-0 -z-50 blur-xl opacity-40" 
