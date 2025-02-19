@@ -12,6 +12,7 @@ export const useAudioPlayerHook = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
     const [hasUserInteracted, setHasUserInteracted] = useState(false);
+    const [queue, setQueue] = useState<Track[]>([]);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !socket) return;
@@ -214,7 +215,14 @@ export const useAudioPlayerHook = () => {
 
     const playNext = () => { return; };
     const playPrevious = () => { return; };
-    const queue = () => { return; };
+    
+    const addToQueue = (track: Track) => {
+        setQueue(prev => [...prev, track]);
+        socket?.emit('queue-update', {
+            queue: [...queue, track],
+            roomId: currentRoom
+        });
+    };
     
     
     return {
@@ -230,7 +238,8 @@ export const useAudioPlayerHook = () => {
             playPrevious,
             playTrack,
             togglePlay,
-            seek
+            seek,
+            addToQueue
         }
     };
 };
