@@ -89,27 +89,17 @@ import { useSocket } from '@/context/SocketContext';
 
 const MenuTabs = () => {
     const pathname = usePathname();
-    const { socket, currentRoom, roomState } = useSocket();
+    const { currentRoom, roomState } = useSocket();
     const [activeTab, setActiveTab] = useState(pathname?.split('/').pop() || 'home');
     const [participantCount, setParticipantCount] = useState(0);
 
     useEffect(() => {
-        if (!socket || !currentRoom) return;
-
+        if (!currentRoom) return;
         // Update participant count when room info changes
         if (roomState) {
             setParticipantCount(roomState.participants);
         }
-
-        socket.emit('get-live-participants', currentRoom, (response: {
-            success: boolean,
-            participants: number
-        }) => {
-            if (response && response.success) {
-                setParticipantCount(response.participants);
-            }
-        });
-    }, [socket, currentRoom, roomState]);
+    }, [currentRoom, roomState]);
 
     const tabs = [
         { id: 'home', icon: Home, label: 'Home' },

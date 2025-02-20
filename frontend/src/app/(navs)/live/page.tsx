@@ -11,7 +11,7 @@ import { useAudioStream } from '@/hooks/useAudioStream';
 
 const Live = () => {
   const [message, setMessage] = useState('');
-  const [participantCount, setParticipantCount] = useState(3);
+  const [participantCount, setParticipantCount] = useState(0);
   const [showChat, setShowChat] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -86,7 +86,7 @@ const Live = () => {
     sendChatMessage
   } = useAudioStream({
     onParticipantUpdate: (count) => {
-      setParticipantCount(count);
+      setParticipantCount(count)
     },
     onChatMessage: (msg:{user: string, message: string,avatar: string,isHost: boolean }) => {
       setChatMessages(prev => [

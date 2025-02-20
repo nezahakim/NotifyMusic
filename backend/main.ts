@@ -215,7 +215,7 @@ io.on('connection', (socket) => {
         }
     
         try {
-            const searchQuery = encodeURIComponent(query + " audio");
+            const searchQuery = encodeURIComponent(query + 'Official Audio');
             const response = await fetch(`https://www.youtube.com/results?search_query=${searchQuery}`);
             const html = await response.text();
             
@@ -319,3 +319,4 @@ app.get('/', async (req: any, res: any)=>{
 server.listen(3001, ()=>{
     console.log("Socket server running on port 3001"); 
 })
+

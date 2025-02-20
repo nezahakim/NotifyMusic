@@ -15,7 +15,7 @@ export function useAudioStream({
   onParticipantUpdate,
   onChatMessage,
 }: AudioStreamOptions) {
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected, currentRoom,roomState } = useSocket();
   const [isMuted, setIsMuted] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,12 +25,12 @@ export function useAudioStream({
 
   useEffect(() => {
     if (!socket) return;
-
-    socket.on('info', (data) => {
-      if (data.participants !== undefined && onParticipantUpdate) {
-        onParticipantUpdate(data.participants);
+    
+    if(currentRoom && roomState){
+      if (roomState.participants !== undefined && onParticipantUpdate) {
+        onParticipantUpdate(roomState.participants);
       }
-    });
+    }
 
     socket.on('chat-message', (data) => {
       if (onChatMessage) {
@@ -77,6 +77,10 @@ export function useAudioStream({
         setError('Could not initialize audio system');
       }
     }
+
+    socket.on('get-live-participants', (roomId, responce)=>{
+      console.log(responce)
+    });
 
     return () => {
       stopMicrophone();
