@@ -18,6 +18,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
+    "build":"bun build",
     "start": "bun run main.ts",
     "dev": "bun run --watch main.ts"
   },
