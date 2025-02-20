@@ -1,0 +1,16 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "main.ts",
+        "use": "@vercel/bun"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/.*",
+        "dest": "main.ts"
+      }
+    ]
+  }
+  
