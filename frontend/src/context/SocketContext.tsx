@@ -275,7 +275,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             
             // Only attempt to join room if there is a currentRoom
             if (currentRoom) {
-                socket.emit('join-room', currentRoom);
+                // socket.emit('join-room', currentRoom);
             }
         };
 
