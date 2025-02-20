@@ -2,8 +2,7 @@
     "version": 2,
     "builds": [
       {
-        "src": "main.ts",
-        "use": "@vercel/bun"
+        "src": "main.ts"
       }
     ],
     "routes": [
@@ -11,6 +10,7 @@
         "src": "/.*",
         "dest": "main.ts"
       }
-    ]
+    ],
+     "installCommand": "bun install"
   }
   
