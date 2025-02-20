@@ -17,9 +17,6 @@
   "name": "stream",
   "module": "index.ts",
   "type": "module",
-  "engines": {
-    "node": "18.x"
-    },
   "scripts": {
     "vercel-build": "bun install",
     "build":"bun build",
