@@ -289,7 +289,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         socket.on('connect', handleConnect);
-        socket.on('disconnect', handleDisconnect);
+        // socket.on('disconnect', handleDisconnect);
         socket.on('room-state', handleRoomState);
         socket.on('playback-update', handlePlaybackUpdate);
         socket.on('error', handleError);
