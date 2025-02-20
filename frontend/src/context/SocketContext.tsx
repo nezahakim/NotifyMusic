@@ -279,8 +279,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             }
         };
 
-        const handleDisconnect = () => {
-            console.log('Socket disconnected');
+        const handleDisconnect = (err:string) => {
+            console.log('Socket disconnected',err);
             setIsConnected(false);
         };
 
